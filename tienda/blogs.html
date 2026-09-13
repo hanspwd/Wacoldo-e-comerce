@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Web - Blogs</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <main class="contenedor">
+        <h1>NOTICIAS IMPORTANTES</h1>
+        <article class="tarjeta blog-resumen">
+            <div>
+                <h2>CASO CURIOSO #1</h2>
+                <p>¿Sabías que el café de grano conserva mejor su aroma cuando se muele justo antes de prepararlo? Te contamos cómo elegir el tueste ideal para tu método de preparación favorito.</p>
+                <a class="btn btn-primario" href="blog-1.html">Ver caso</a>
+            </div>
+            <img class="blog-img" src="../img/cafe.png" alt="Café de grano">
+        </article>
+        <article class="tarjeta blog-resumen">
+            <div>
+                <h2>CASO CURIOSO #2</h2>
+                <p>La amortiguación de tus zapatillas pierde eficacia con el uso diario. Descubre cada cuánto conviene renovarlas y cómo elegir el modelo ideal según tu pisada.</p>
+                <a class="btn btn-primario" href="blog-2.html">Ver caso</a>
+            </div>
+            <img class="blog-img" src="../img/zapatillas_flex.png" alt="Zapatillas urbanas">
+        </article>
+    </main>
+
+    <div id="footer"></div>
+
+    <script>var BASE = "../";</script>
+    <script src="../js/validaciones.js"></script>
+    <script src="../js/datos.js"></script>
+    <script src="../js/regiones_comunas.js"></script>
+    <script src="../js/carrito.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        App.renderNavbar("blogs");
+        App.renderFooter();
+    </script>
+</body>
+</html>

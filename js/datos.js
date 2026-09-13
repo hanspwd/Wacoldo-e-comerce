@@ -8,6 +8,8 @@ const CATEGORIAS = [
     "Alimentos"
 ];
 
+const CLAVE_CATALOGO = "tienda_catalogo";
+
 const productos = [
     {
         codigo: "PRD-001",
@@ -17,7 +19,7 @@ const productos = [
         stock: 25,
         stockCritico: 5,
         categoria: "Tecnología",
-        imagen: "https://picsum.photos/seed/auriculares/400/400"
+        imagen: "img/ariculares_inalambricos.png"
     },
     {
         codigo: "PRD-002",
@@ -27,7 +29,7 @@ const productos = [
         stock: 40,
         stockCritico: 8,
         categoria: "Tecnología",
-        imagen: "https://picsum.photos/seed/teclado/400/400"
+        imagen: "img/teclado_mecanico.png"
     },
     {
         codigo: "PRD-003",
@@ -37,7 +39,7 @@ const productos = [
         stock: 60,
         stockCritico: 10,
         categoria: "Ropa",
-        imagen: "https://picsum.photos/seed/polera/400/400"
+        imagen: "img/polera_algodon.png"
     },
     {
         codigo: "PRD-004",
@@ -47,7 +49,7 @@ const productos = [
         stock: 32,
         stockCritico: 6,
         categoria: "Deportes",
-        imagen: "https://picsum.photos/seed/zapatillas/400/400"
+        imagen: "img/zapatillas_flex.png"
     },
     {
         codigo: "PRD-005",
@@ -57,7 +59,7 @@ const productos = [
         stock: 3,
         stockCritico: 5,
         categoria: "Hogar",
-        imagen: "https://picsum.photos/seed/lampara/400/400"
+        imagen: "img/lampara_led.png"
     },
     {
         codigo: "PRD-006",
@@ -67,7 +69,7 @@ const productos = [
         stock: 0,
         stockCritico: 4,
         categoria: "Hogar",
-        imagen: "https://picsum.photos/seed/termo/400/400"
+        imagen: "img/termo.png"
     },
     {
         codigo: "PRD-007",
@@ -77,7 +79,7 @@ const productos = [
         stock: 80,
         stockCritico: 15,
         categoria: "Alimentos",
-        imagen: "https://picsum.photos/seed/cafe/400/400"
+        imagen: "img/cafe.png"
     },
     {
         codigo: "PRD-008",
@@ -87,12 +89,97 @@ const productos = [
         stock: 50,
         stockCritico: 10,
         categoria: "Deportes",
-        imagen: "https://picsum.photos/seed/botella/400/400"
+        imagen: "img/botella_deportive.png"
     }
 ];
 
+function leerCambiosCatalogo() {
+    const vacio = { agregados: [], editados: {}, eliminados: [] };
+    try {
+        if (typeof localStorage === "undefined") {
+            return vacio;
+        }
+        const datos = JSON.parse(localStorage.getItem(CLAVE_CATALOGO));
+        if (!datos || typeof datos !== "object") {
+            return vacio;
+        }
+        return {
+            agregados: Array.isArray(datos.agregados) ? datos.agregados : [],
+            editados: datos.editados && typeof datos.editados === "object" ? datos.editados : {},
+            eliminados: Array.isArray(datos.eliminados) ? datos.eliminados : []
+        };
+    } catch (error) {
+        return vacio;
+    }
+}
+
+function guardarCambiosCatalogo(cambios) {
+    try {
+        if (typeof localStorage === "undefined") {
+            return false;
+        }
+        localStorage.setItem(CLAVE_CATALOGO, JSON.stringify(cambios));
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+function obtenerCatalogo() {
+    const cambios = leerCambiosCatalogo();
+    const lista = productos
+        .filter(function (producto) {
+            return cambios.eliminados.indexOf(producto.codigo) === -1;
+        })
+        .map(function (producto) {
+            const editado = cambios.editados[producto.codigo];
+            return editado ? Object.assign({}, producto, editado, { codigo: producto.codigo }) : producto;
+        });
+    cambios.agregados.forEach(function (producto) {
+        lista.push(producto);
+    });
+    return lista;
+}
+
+function guardarProductoLocal(producto) {
+    const cambios = leerCambiosCatalogo();
+    const esBase = productos.some(function (item) {
+        return item.codigo === producto.codigo;
+    });
+    if (esBase) {
+        cambios.editados[producto.codigo] = Object.assign({}, producto, { codigo: producto.codigo });
+    } else {
+        const indice = cambios.agregados.findIndex(function (item) {
+            return item.codigo === producto.codigo;
+        });
+        if (indice === -1) {
+            cambios.agregados.push(producto);
+        } else {
+            cambios.agregados[indice] = producto;
+        }
+    }
+    guardarCambiosCatalogo(cambios);
+    return true;
+}
+
+function eliminarProductoLocal(codigo) {
+    const cambios = leerCambiosCatalogo();
+    cambios.agregados = cambios.agregados.filter(function (item) {
+        return item.codigo !== codigo;
+    });
+    delete cambios.editados[codigo];
+    const esBase = productos.some(function (item) {
+        return item.codigo === codigo;
+    });
+    if (esBase && cambios.eliminados.indexOf(codigo) === -1) {
+        cambios.eliminados.push(codigo);
+    }
+    guardarCambiosCatalogo(cambios);
+    return true;
+}
+
 function buscarProducto(codigo) {
-    return productos.find(function (producto) {
+    return obtenerCatalogo().find(function (producto) {
         return producto.codigo === codigo;
     }) || null;
 }

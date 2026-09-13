@@ -3,14 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda Web</title>
+    <title>Tienda Web - Home</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h1>Inicial</h1>
+    <div id="navbar"></div>
+
+    <main class="contenedor">
+        <section class="hero tarjeta">
+            <div class="hero-texto">
+                <h1>TIENDA ONLINE</h1>
+                <p>Descubre nuestro catálogo con lo mejor en tecnología, ropa, hogar, deportes y alimentos. Compra fácil, rápido y seguro.</p>
+                <a class="btn btn-primario" href="tienda/productos.html">Ver productos</a>
+            </div>
+            <div class="hero-imagen">
+                <img src="img/ariculares_inalambricos.png" alt="Producto destacado">
+            </div>
+        </section>
+
+        <section>
+            <h2>Productos destacados</h2>
+            <div id="grid-productos" class="grid-productos"></div>
+        </section>
+    </main>
+
+    <div id="footer"></div>
+
+    <script>var BASE = "";</script>
     <script src="js/validaciones.js"></script>
     <script src="js/datos.js"></script>
     <script src="js/regiones_comunas.js"></script>
     <script src="js/carrito.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        App.renderNavbar("home");
+        App.renderFooter();
+        App.pintarCatalogo("grid-productos", obtenerCatalogo());
+    </script>
 </body>
 </html>

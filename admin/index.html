@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - Dashboard</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="admin-contenedor">
+        <aside class="admin-menu">
+            <a class="admin-logo" href="../index.html">Tienda Web</a>
+            <nav id="admin-menu"></nav>
+        </aside>
+        <main class="admin-principal">
+            <header class="admin-encabezado">
+                <h1 id="admin-usuario"></h1>
+            </header>
+            <section class="stats">
+                <article class="tarjeta stat">
+                    <h3>Productos</h3>
+                    <p id="stat-productos">0</p>
+                </article>
+                <article class="tarjeta stat">
+                    <h3>Stock crítico</h3>
+                    <p id="stat-criticos">0</p>
+                </article>
+                <article class="tarjeta stat">
+                    <h3>Usuarios</h3>
+                    <p id="stat-usuarios">0</p>
+                </article>
+                <article class="tarjeta stat">
+                    <h3>Mensajes</h3>
+                    <p id="stat-mensajes">0</p>
+                </article>
+            </section>
+            <section class="tarjeta">
+                <h2>Accesos directos</h2>
+                <div class="grupo-botones">
+                    <a class="btn btn-primario" href="producto-form.html">Nuevo producto</a>
+                    <a class="btn btn-primario" href="productos.html">Ver productos</a>
+                    <a class="btn btn-secundario" href="usuario-form.html" id="btn-nuevo-usuario">Nuevo usuario</a>
+                    <a class="btn btn-secundario" href="usuarios.html" id="btn-ver-usuarios">Ver usuarios</a>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>var BASE = "../";</script>
+    <script src="../js/validaciones.js"></script>
+    <script src="../js/datos.js"></script>
+    <script src="../js/regiones_comunas.js"></script>
+    <script src="../js/carrito.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        if (!App.requerirRol(["Administrador", "Vendedor"])) {
+            throw new Error("Sin autorización");
+        }
+        App.renderAdmin("dashboard");
+        const catalogo = obtenerCatalogo();
+        document.getElementById("stat-productos").textContent = catalogo.length;
+        document.getElementById("stat-criticos").textContent = catalogo.filter(function (p) {
+            return p.stock > 0 && Validaciones.esStockCritico(p.stock, p.stockCritico);
+        }).length;
+        document.getElementById("stat-usuarios").textContent = App.obtenerUsuarios().length;
+        document.getElementById("stat-mensajes").textContent = App.obtenerMensajes().length;
+        if (!App.esAdmin()) {
+            document.getElementById("btn-nuevo-usuario").style.display = "none";
+            document.getElementById("btn-ver-usuarios").style.display = "none";
+        }
+    </script>
+</body>
+</html>

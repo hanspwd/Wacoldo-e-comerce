@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - Usuarios</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="admin-contenedor">
+        <aside class="admin-menu">
+            <a class="admin-logo" href="../index.html">Tienda Web</a>
+            <nav id="admin-menu"></nav>
+        </aside>
+        <main class="admin-principal">
+            <header class="admin-encabezado">
+                <h1>Usuarios</h1>
+                <a class="btn btn-primario" href="usuario-form.html">Nuevo usuario</a>
+            </header>
+            <div class="tarjeta tabla-responsive">
+                <table class="tabla">
+                    <thead>
+                        <tr>
+                            <th>RUN</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Tipo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-usuarios"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>var BASE = "../";</script>
+    <script src="../js/validaciones.js"></script>
+    <script src="../js/datos.js"></script>
+    <script src="../js/regiones_comunas.js"></script>
+    <script src="../js/carrito.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        if (!App.requerirRol(["Administrador"], "admin/index.html")) {
+            throw new Error("Sin autorización");
+        }
+        App.renderAdmin("usuarios");
+
+        function pintar() {
+            document.getElementById("tabla-usuarios").innerHTML = App.obtenerUsuarios().map(function (u) {
+                return "<tr>" +
+                    "<td>" + App.escapar(u.run || "-") + "</td>" +
+                    "<td>" + App.escapar(u.nombre + " " + (u.apellidos || "")) + "</td>" +
+                    "<td>" + App.escapar(u.correo) + "</td>" +
+                    "<td>" + App.escapar(u.tipo) + "</td>" +
+                    '<td><div class="grupo-botones">' +
+                    '<a class="btn btn-secundario" href="usuario-form.html?correo=' + encodeURIComponent(u.correo) + '">Editar</a>' +
+                    '<button class="btn btn-peligro" type="button" data-eliminar data-correo="' + App.escapar(u.correo) + '">Eliminar</button>' +
+                    "</div></td></tr>";
+            }).join("");
+        }
+
+        document.getElementById("tabla-usuarios").addEventListener("click", function (e) {
+            const boton = e.target.closest("[data-eliminar]");
+            if (!boton) {
+                return;
+            }
+            const correo = boton.getAttribute("data-correo");
+            const sesion = App.obtenerSesion();
+            if (sesion && sesion.correo.toLowerCase() === String(correo).toLowerCase()) {
+                App.avisar("No puedes eliminar tu propio usuario.", "error");
+                return;
+            }
+            if (confirm("¿Eliminar el usuario " + correo + "?")) {
+                App.guardarUsuarios(App.obtenerUsuarios().filter(function (u) {
+                    return u.correo.toLowerCase() !== String(correo).toLowerCase();
+                }));
+                App.avisar("Usuario eliminado.", "exito");
+                pintar();
+            }
+        });
+
+        pintar();
+    </script>
+</body>
+</html>

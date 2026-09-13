@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Web - Contacto</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <main class="contenedor">
+        <form id="form-contacto" class="tarjeta formulario" novalidate>
+            <h1>Tienda Web</h1>
+            <h2>Formulario de contactos</h2>
+            <div id="alerta-contacto"></div>
+            <div class="campo">
+                <label for="nombre">Nombre completo</label>
+                <input type="text" id="nombre" maxlength="100">
+                <p class="mensaje-error"></p>
+            </div>
+            <div class="campo">
+                <label for="correo">Correo</label>
+                <input type="email" id="correo" maxlength="100">
+                <p class="mensaje-error"></p>
+            </div>
+            <div class="campo">
+                <label for="contenido">Contenido</label>
+                <textarea id="contenido" rows="5" maxlength="500"></textarea>
+                <p class="mensaje-error"></p>
+            </div>
+            <button class="btn btn-primario" type="submit">Enviar mensaje</button>
+        </form>
+    </main>
+
+    <div id="footer"></div>
+
+    <script>var BASE = "../";</script>
+    <script src="../js/validaciones.js"></script>
+    <script src="../js/datos.js"></script>
+    <script src="../js/regiones_comunas.js"></script>
+    <script src="../js/carrito.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        App.renderNavbar("contacto");
+        App.renderFooter();
+
+        document.getElementById("form-contacto").addEventListener("submit", function (e) {
+            e.preventDefault();
+            App.limpiarErrores("form-contacto");
+            const nombre = App.valor("nombre");
+            const correo = App.valor("correo");
+            const contenido = App.valor("contenido");
+            let valido = true;
+            let resultado = Validaciones.validarRequerido(nombre, "Nombre completo");
+            if (!resultado.valido) {
+                App.mostrarError("nombre", resultado.mensaje);
+                valido = false;
+            } else {
+                resultado = Validaciones.validarLargo(nombre, null, 100, "Nombre completo");
+                if (!resultado.valido) {
+                    App.mostrarError("nombre", resultado.mensaje);
+                    valido = false;
+                }
+            }
+            resultado = Validaciones.validarCorreo(correo);
+            if (!resultado.valido) {
+                App.mostrarError("correo", resultado.mensaje);
+                valido = false;
+            }
+            resultado = Validaciones.validarComentario(contenido);
+            if (!resultado.valido) {
+                App.mostrarError("contenido", resultado.mensaje);
+                valido = false;
+            }
+            if (!valido) {
+                return;
+            }
+            App.guardarMensaje({ nombre: nombre, correo: correo, contenido: contenido, fecha: new Date().toISOString() });
+            document.getElementById("alerta-contacto").innerHTML = '<div class="alerta alerta-exito">Mensaje enviado. Te contactaremos pronto.</div>';
+            document.getElementById("form-contacto").reset();
+        });
+    </script>
+</body>
+</html>

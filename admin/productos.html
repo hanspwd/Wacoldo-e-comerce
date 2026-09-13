@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - Productos</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="admin-contenedor">
+        <aside class="admin-menu">
+            <a class="admin-logo" href="../index.html">Tienda Web</a>
+            <nav id="admin-menu"></nav>
+        </aside>
+        <main class="admin-principal">
+            <header class="admin-encabezado">
+                <h1>Productos</h1>
+                <a class="btn btn-primario" href="producto-form.html">Nuevo producto</a>
+            </header>
+            <div class="tarjeta tabla-responsive">
+                <table class="tabla">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-productos"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>var BASE = "../";</script>
+    <script src="../js/validaciones.js"></script>
+    <script src="../js/datos.js"></script>
+    <script src="../js/regiones_comunas.js"></script>
+    <script src="../js/carrito.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        if (!App.requerirRol(["Administrador", "Vendedor"])) {
+            throw new Error("Sin autorización");
+        }
+        App.renderAdmin("productos");
+
+        function pintar() {
+            const cuerpo = document.getElementById("tabla-productos");
+            cuerpo.innerHTML = obtenerCatalogo().map(function (p) {
+                const critico = p.stock > 0 && Validaciones.esStockCritico(p.stock, p.stockCritico);
+                return "<tr" + (critico ? ' class="fila-critica"' : "") + ">" +
+                    "<td>" + App.escapar(p.codigo) + "</td>" +
+                    "<td>" + App.escapar(p.nombre) + (critico ? ' <span class="insignia-critico">¡Stock crítico!</span>' : "") + "</td>" +
+                    "<td>" + App.escapar(p.categoria) + "</td>" +
+                    "<td>" + App.etiquetaPrecio(p.precio) + "</td>" +
+                    "<td>" + p.stock + "</td>" +
+                    '<td><div class="grupo-botones">' +
+                    '<a class="btn btn-secundario" href="producto-form.html?codigo=' + encodeURIComponent(p.codigo) + '">Editar</a>' +
+                    '<button class="btn btn-peligro" type="button" data-eliminar data-codigo="' + App.escapar(p.codigo) + '">Eliminar</button>' +
+                    "</div></td></tr>";
+            }).join("");
+        }
+
+        document.getElementById("tabla-productos").addEventListener("click", function (e) {
+            const boton = e.target.closest("[data-eliminar]");
+            if (!boton) {
+                return;
+            }
+            if (confirm("¿Eliminar el producto " + boton.getAttribute("data-codigo") + "?")) {
+                eliminarProductoLocal(boton.getAttribute("data-codigo"));
+                App.avisar("Producto eliminado.", "exito");
+                pintar();
+            }
+        });
+
+        pintar();
+    </script>
+</body>
+</html>

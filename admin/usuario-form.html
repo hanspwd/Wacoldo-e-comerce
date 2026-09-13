@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - Usuario</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="admin-contenedor">
+        <aside class="admin-menu">
+            <a class="admin-logo" href="../index.html">Tienda Web</a>
+            <nav id="admin-menu"></nav>
+        </aside>
+        <main class="admin-principal">
+            <header class="admin-encabezado">
+                <h1 id="titulo-form">Nuevo usuario</h1>
+            </header>
+            <form id="form-usuario" class="tarjeta formulario" novalidate>
+                <div class="campo">
+                    <label for="run">RUN (sin puntos ni guion. Ej: 19011022K)</label>
+                    <input type="text" id="run" maxlength="9">
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="campo">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" id="nombre" maxlength="50">
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="campo">
+                    <label for="apellidos">Apellidos</label>
+                    <input type="text" id="apellidos" maxlength="100">
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="campo">
+                    <label for="correo">Correo</label>
+                    <input type="email" id="correo" maxlength="100">
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="campo">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" maxlength="10">
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="campo">
+                    <label for="confirmar">Confirmar contraseña</label>
+                    <input type="password" id="confirmar" maxlength="10">
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="campo">
+                    <label for="fecha-nacimiento">Fecha nacimiento (opcional)</label>
+                    <input type="date" id="fecha-nacimiento">
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="campo">
+                    <label for="tipo">Tipo de usuario</label>
+                    <select id="tipo"></select>
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="campo">
+                    <label for="region">Región</label>
+                    <select id="region"></select>
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="campo">
+                    <label for="comuna">Comuna</label>
+                    <select id="comuna"></select>
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="campo">
+                    <label for="direccion">Dirección</label>
+                    <input type="text" id="direccion" maxlength="300">
+                    <p class="mensaje-error"></p>
+                </div>
+                <div class="grupo-botones">
+                    <button class="btn btn-primario" type="submit">Guardar</button>
+                    <a class="btn btn-secundario" href="usuarios.html">Volver</a>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>var BASE = "../";</script>
+    <script src="../js/validaciones.js"></script>
+    <script src="../js/datos.js"></script>
+    <script src="../js/regiones_comunas.js"></script>
+    <script src="../js/carrito.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        if (!App.requerirRol(["Administrador"], "admin/index.html")) {
+            throw new Error("Sin autorización");
+        }
+        App.renderAdmin("usuarios");
+
+        const selTipo = document.getElementById("tipo");
+        selTipo.innerHTML = TIPOS_USUARIO.map(function (t) {
+            return '<option value="' + t + '">' + t + "</option>";
+        }).join("");
+
+        const correoParam = new URLSearchParams(location.search).get("correo");
+        const enEdicion = !!correoParam;
+        const original = enEdicion ? App.buscarUsuarioPorCorreo(correoParam) : null;
+        if (enEdicion && !original) {
+            location.href = "usuarios.html";
+        }
+        if (original) {
+            document.getElementById("titulo-form").textContent = "Editar usuario";
+            document.getElementById("run").value = original.run || "";
+            document.getElementById("nombre").value = original.nombre || "";
+            document.getElementById("apellidos").value = original.apellidos || "";
+            document.getElementById("correo").value = original.correo || "";
+            document.getElementById("correo").disabled = true;
+            document.getElementById("fecha-nacimiento").value = original.fechaNacimiento || "";
+            selTipo.value = original.tipo || "Cliente";
+            document.getElementById("direccion").value = original.direccion || "";
+            App.cargarRegiones("region", "comuna", original.region, original.comuna);
+        } else {
+            App.cargarRegiones("region", "comuna");
+        }
+
+        function validarTodo() {
+            App.limpiarErrores("form-usuario");
+            let valido = true;
+            function marca(id, resultado) {
+                if (!resultado.valido) {
+                    App.mostrarError(id, resultado.mensaje);
+                    valido = false;
+                }
+            }
+            marca("run", Validaciones.validarRun(App.valor("run")));
+            marca("nombre", Validaciones.validarNombreUsuario(App.valor("nombre")));
+            marca("apellidos", Validaciones.validarApellidos(App.valor("apellidos")));
+            const correo = App.valor("correo");
+            const resultadoCorreo = Validaciones.validarCorreo(correo);
+            if (!resultadoCorreo.valido) {
+                App.mostrarError("correo", resultadoCorreo.mensaje);
+                valido = false;
+            } else if (!enEdicion && App.buscarUsuarioPorCorreo(correo)) {
+                App.mostrarError("correo", "El correo ya está registrado.");
+                valido = false;
+            }
+            const password = document.getElementById("password").value;
+            const confirmar = document.getElementById("confirmar").value;
+            if (!enEdicion || password !== "" || confirmar !== "") {
+                marca("password", Validaciones.validarContrasena(password));
+                marca("confirmar", Validaciones.validarConfirmacionContrasena(password, confirmar));
+            }
+            const fecha = App.valor("fecha-nacimiento");
+            if (fecha !== "") {
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+                if (new Date(fecha + "T00:00:00") > hoy) {
+                    App.mostrarError("fecha-nacimiento", "La fecha de nacimiento no puede ser futura.");
+                    valido = false;
+                }
+            }
+            marca("direccion", Validaciones.validarDireccion(App.valor("direccion")));
+            const resultadoZona = Validaciones.validarRegionYComuna(App.valor("region"), App.valor("comuna"));
+            if (!resultadoZona.valido) {
+                App.mostrarError("region", resultadoZona.mensaje);
+                App.mostrarError("comuna", resultadoZona.mensaje);
+                valido = false;
+            }
+            return valido;
+        }
+
+        document.getElementById("form-usuario").addEventListener("submit", function (e) {
+            e.preventDefault();
+            if (!validarTodo()) {
+                return;
+            }
+            const lista = App.obtenerUsuarios();
+            const password = document.getElementById("password").value;
+            if (enEdicion) {
+                const indice = lista.findIndex(function (u) {
+                    return u.correo.toLowerCase() === original.correo.toLowerCase();
+                });
+                lista[indice] = {
+                    run: App.valor("run").toUpperCase(),
+                    nombre: App.valor("nombre"),
+                    apellidos: App.valor("apellidos"),
+                    correo: original.correo,
+                    password: password !== "" ? password : lista[indice].password,
+                    telefono: lista[indice].telefono || "",
+                    fechaNacimiento: App.valor("fecha-nacimiento"),
+                    tipo: App.valor("tipo"),
+                    region: App.valor("region"),
+                    comuna: App.valor("comuna"),
+                    direccion: App.valor("direccion")
+                };
+            } else {
+                lista.push({
+                    run: App.valor("run").toUpperCase(),
+                    nombre: App.valor("nombre"),
+                    apellidos: App.valor("apellidos"),
+                    correo: App.valor("correo"),
+                    password: password,
+                    telefono: "",
+                    fechaNacimiento: App.valor("fecha-nacimiento"),
+                    tipo: App.valor("tipo"),
+                    region: App.valor("region"),
+                    comuna: App.valor("comuna"),
+                    direccion: App.valor("direccion")
+                });
+            }
+            App.guardarUsuarios(lista);
+            location.href = "usuarios.html";
+        });
+    </script>
+</body>
+</html>

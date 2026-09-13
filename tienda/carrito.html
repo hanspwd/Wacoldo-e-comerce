@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Web - Carrito de compras</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <main class="contenedor">
+        <h1>Mi carrito de compras</h1>
+        <div id="contenido-carrito"></div>
+    </main>
+
+    <div id="footer"></div>
+
+    <script>var BASE = "../";</script>
+    <script src="../js/validaciones.js"></script>
+    <script src="../js/datos.js"></script>
+    <script src="../js/regiones_comunas.js"></script>
+    <script src="../js/carrito.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        App.renderNavbar("productos");
+        App.renderFooter();
+        let descuento = 0;
+
+        function pintar() {
+            const contenedor = document.getElementById("contenido-carrito");
+            const items = Carrito.obtener();
+            if (items.length === 0) {
+                contenedor.innerHTML = "<p>Tu carrito está vacío.</p><a class='btn btn-primario' href='productos.html'>Ver productos</a>";
+                return;
+            }
+            const filas = items.map(function (item) {
+                const producto = buscarProducto(item.codigo);
+                const categoria = producto ? producto.categoria : "";
+                return "<tr>" +
+                    '<td><img class="carrito-img" src="' + App.ruta(item.imagen) + '" alt="' + App.escapar(item.nombre) + '"></td>' +
+                    "<td><strong>" + App.escapar(item.nombre) + "</strong><br>" + App.escapar(categoria) + "</td>" +
+                    "<td>" + App.etiquetaPrecio(item.precio) + "</td>" +
+                    '<td><div class="grupo-botones">' +
+                    '<button class="btn btn-secundario" type="button" data-dec data-codigo="' + App.escapar(item.codigo) + '">-</button>' +
+                    "<span>" + item.cantidad + "</span>" +
+                    '<button class="btn btn-secundario" type="button" data-inc data-codigo="' + App.escapar(item.codigo) + '">+</button>' +
+                    '<button class="btn btn-peligro" type="button" data-quitar data-codigo="' + App.escapar(item.codigo) + '">Eliminar</button>' +
+                    "</div></td></tr>";
+            }).join("");
+            const subtotal = Carrito.totalPrecio();
+            const montoDescuento = Math.round(subtotal * descuento / 100);
+            const total = subtotal - montoDescuento;
+            contenedor.innerHTML =
+                '<table class="tabla"><thead><tr><th>Producto</th><th>Descripción</th><th>Precio</th><th>Cantidad</th></tr></thead>' +
+                "<tbody>" + filas + "</tbody></table>" +
+                '<p class="total-carrito">TOTAL: <strong>' + formatearPrecio(total) + "</strong></p>" +
+                (descuento > 0 ? "<p>Descuento aplicado: " + descuento + "%</p>" : "") +
+                '<div class="campo campo-cupon"><label for="cupon">Ingrese el cupón de descuento</label>' +
+                '<div class="grupo-botones"><input type="text" id="cupon" placeholder="Ej: DUOC10">' +
+                '<button class="btn btn-secundario" type="button" id="btn-cupon">Aplicar</button></div></div>' +
+                '<div class="grupo-botones"><button class="btn btn-primario" type="button" id="btn-pagar">Pagar</button>' +
+                '<button class="btn btn-peligro" type="button" id="btn-vaciar">Vaciar carrito</button></div>';
+            document.getElementById("btn-cupon").addEventListener("click", function () {
+                const resultado = App.aplicarCupon(document.getElementById("cupon").value);
+                if (resultado.exito) {
+                    descuento = resultado.porcentaje;
+                }
+                App.avisar(resultado.mensaje, resultado.exito ? "exito" : "error");
+                pintar();
+            });
+            document.getElementById("btn-pagar").addEventListener("click", function () {
+                Carrito.vaciar();
+                descuento = 0;
+                App.actualizarInsigniaCarrito();
+                App.avisar("¡Gracias por tu compra!", "exito");
+                pintar();
+            });
+            document.getElementById("btn-vaciar").addEventListener("click", function () {
+                Carrito.vaciar();
+                descuento = 0;
+                App.actualizarInsigniaCarrito();
+                pintar();
+            });
+        }
+
+        document.getElementById("contenido-carrito").addEventListener("click", function (e) {
+            const codigo = e.target.getAttribute("data-codigo");
+            if (!codigo) {
+                return;
+            }
+            if (e.target.hasAttribute("data-inc")) {
+                const item = Carrito.obtener().find(function (i) { return i.codigo === codigo; });
+                const resultado = Carrito.actualizarCantidad(codigo, item.cantidad + 1);
+                if (!resultado.exito) {
+                    App.avisar(resultado.mensaje, "error");
+                }
+                pintar();
+            }
+            if (e.target.hasAttribute("data-dec")) {
+                const item = Carrito.obtener().find(function (i) { return i.codigo === codigo; });
+                Carrito.actualizarCantidad(codigo, item.cantidad - 1);
+                App.actualizarInsigniaCarrito();
+                pintar();
+            }
+            if (e.target.hasAttribute("data-quitar")) {
+                Carrito.quitar(codigo);
+                App.actualizarInsigniaCarrito();
+                pintar();
+            }
+        });
+
+        pintar();
+    </script>
+</body>
+</html>

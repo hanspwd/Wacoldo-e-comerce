@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Web - Nosotros</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <main class="contenedor">
+        <section class="tarjeta">
+            <h1>Nosotros</h1>
+            <p>Somos una tienda online chilena dedicada a ofrecer productos de calidad en tecnología, ropa, hogar, deportes y alimentos, con despacho a todo el país y atención personalizada.</p>
+            <p>Nuestro compromiso es entregar una experiencia de compra simple, segura y transparente, respaldada por un equipo de desarrollo enfocado en la mejora continua.</p>
+        </section>
+        <section>
+            <h2>Equipo de desarrollo</h2>
+            <div class="grid-equipo">
+                <article class="tarjeta">
+                    <h3>Nombre Integrante 1</h3>
+                    <p>Desarrollo frontend y validaciones.</p>
+                </article>
+                <article class="tarjeta">
+                    <h3>Nombre Integrante 2</h3>
+                    <p>Diseño, estilos y maquetación.</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer"></div>
+
+    <script>var BASE = "../";</script>
+    <script src="../js/validaciones.js"></script>
+    <script src="../js/datos.js"></script>
+    <script src="../js/regiones_comunas.js"></script>
+    <script src="../js/carrito.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        App.renderNavbar("nosotros");
+        App.renderFooter();
+    </script>
+</body>
+</html>

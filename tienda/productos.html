@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Web - Productos</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <main class="contenedor">
+        <h1>PRODUCTOS</h1>
+        <div class="campo campo-filtro">
+            <label for="filtro-categoria">Categoría</label>
+            <select id="filtro-categoria">
+                <option value="">Todas las categorías</option>
+            </select>
+        </div>
+        <div id="grid-productos" class="grid-productos"></div>
+    </main>
+
+    <div id="footer"></div>
+
+    <script>var BASE = "../";</script>
+    <script src="../js/validaciones.js"></script>
+    <script src="../js/datos.js"></script>
+    <script src="../js/regiones_comunas.js"></script>
+    <script src="../js/carrito.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        App.renderNavbar("productos");
+        App.renderFooter();
+        const filtro = document.getElementById("filtro-categoria");
+        CATEGORIAS.forEach(function (c) {
+            const opcion = document.createElement("option");
+            opcion.value = c;
+            opcion.textContent = c;
+            filtro.appendChild(opcion);
+        });
+        function pintar() {
+            const categoria = filtro.value;
+            const lista = obtenerCatalogo().filter(function (p) {
+                return !categoria || p.categoria === categoria;
+            });
+            App.pintarCatalogo("grid-productos", lista);
+        }
+        filtro.addEventListener("change", pintar);
+        pintar();
+    </script>
+</body>
+</html>
