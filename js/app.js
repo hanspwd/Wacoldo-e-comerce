@@ -166,11 +166,11 @@ var App = (function () {
             return;
         }
         const enlacesCat = CATEGORIAS.map(function(c) {
-            return '<a href="' + ruta("tienda/productos.html?categoria=" + encodeURIComponent(c)) + '">' + escapar(c) + "</a>";
-        }).join(" | ");
+            return '<a class="cat-pill" href="' + ruta("tienda/productos.html?categoria=" + encodeURIComponent(c)) + '">' + escapar(c) + "</a>";
+        }).join(" ");
 
         el.innerHTML = '<footer class="footer"><div class="contenedor footer-grid">' +
-            '<div><h4>Tienda Web</h4><p>Tu tienda online de confianza.</p></div>' +
+            '<div><h4>Tienda Web</h4><p>Tu tienda online de confianza.</p><p class="pago-footer"><img class="pago-logo" src="' + ruta("img/integracion-webpay.png") + '" alt="Pago seguro con Webpay Plus"></p></div>' +
             '<div><h4>Categorías</h4><p>' + enlacesCat + "</p></div>" +
             '<div><h4>Newsletter</h4><form id="form-newsletter"><div class="grupo-botones">' +
             '<input type="email" id="newsletter-correo" placeholder="Enter Email" aria-label="Correo newsletter">' +
@@ -183,6 +183,9 @@ var App = (function () {
         const el = document.getElementById("insignia-carrito");
         if (el && typeof Carrito !== "undefined") {
             el.textContent = Carrito.totalArticulos();
+            el.classList.remove("pulso");
+            void el.offsetWidth;
+            el.classList.add("pulso");
         }
     }
 

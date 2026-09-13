@@ -60,7 +60,8 @@
                 '<div class="grupo-botones"><input type="text" id="cupon" placeholder="Ej: DUOC10">' +
                 '<button class="btn btn-secundario" type="button" id="btn-cupon">Aplicar</button></div></div>' +
                 '<div class="grupo-botones"><button class="btn btn-primario" type="button" id="btn-pagar">Pagar</button>' +
-                '<button class="btn btn-peligro" type="button" id="btn-vaciar">Vaciar carrito</button></div>';
+                '<button class="btn btn-peligro" type="button" id="btn-vaciar">Vaciar carrito</button></div>' +
+                '<p class="pago-seguro">Pago 100% seguro con <img class="pago-logo" src="../img/integracion-webpay.png" alt="Webpay Plus"></p>';
             document.getElementById("btn-cupon").addEventListener("click", function () {
                 const resultado = App.aplicarCupon(document.getElementById("cupon").value);
                 if (resultado.exito) {
