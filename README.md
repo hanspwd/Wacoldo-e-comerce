@@ -1,6 +1,6 @@
 # Tienda Web
 
-Este proyecto corresponde a la primera entrega de la Evaluación Parcial 1. Consiste en el desarrollo del **Frontend** de una tienda online básica y su respectivo sistema administrativo, enfocado en estructuración, diseño, y validaciones dinámicas. 
+Este proyecto consiste en el desarrollo del **Frontend** de una tienda online básica y su respectivo sistema administrativo, enfocado en estructuración, diseño, y validaciones dinámicas. 
 
 Actualmente el proyecto está diseñado sin Backend, pero con una arquitectura lista para integrarse con APIs o servicios externos en un futuro.
 
@@ -42,4 +42,4 @@ En base a los requerimientos, los formularios cuentan con validaciones estrictas
 
 ## Evolución del Proyecto
 
-Toda la interfaz y las interacciones están diseñadas para funcionar en el navegador y quedan preparadas para, en las siguientes fases del curso, reemplazar la persistencia local y estática por el consumo de datos reales a través de servicios web y bases de datos.
+Toda la interfaz y las interacciones están diseñadas para funcionar en el navegador y quedan preparadas para, en las siguientes fases, reemplazar la persistencia local y estática por el consumo de datos reales a través de servicios web y bases de datos.
