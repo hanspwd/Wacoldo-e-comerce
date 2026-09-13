@@ -165,9 +165,13 @@ var App = (function () {
         if (!el) {
             return;
         }
+        const enlacesCat = CATEGORIAS.map(function(c) {
+            return '<a href="' + ruta("tienda/productos.html?categoria=" + encodeURIComponent(c)) + '">' + escapar(c) + "</a>";
+        }).join(" | ");
+
         el.innerHTML = '<footer class="footer"><div class="contenedor footer-grid">' +
             '<div><h4>Tienda Web</h4><p>Tu tienda online de confianza.</p></div>' +
-            '<div><h4>Categorías</h4><p>' + CATEGORIAS.map(escapar).join(" | ") + "</p></div>" +
+            '<div><h4>Categorías</h4><p>' + enlacesCat + "</p></div>" +
             '<div><h4>Newsletter</h4><form id="form-newsletter"><div class="grupo-botones">' +
             '<input type="email" id="newsletter-correo" placeholder="Enter Email" aria-label="Correo newsletter">' +
             '<button class="btn btn-secundario" type="submit">Subscribe</button>' +

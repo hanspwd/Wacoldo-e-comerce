@@ -38,6 +38,12 @@
             opcion.textContent = c;
             filtro.appendChild(opcion);
         });
+        const params = new URLSearchParams(window.location.search);
+        const catUrl = params.get("categoria");
+        if (catUrl && CATEGORIAS.includes(catUrl)) {
+            filtro.value = catUrl;
+        }
+
         function pintar() {
             const categoria = filtro.value;
             const lista = obtenerCatalogo().filter(function (p) {
