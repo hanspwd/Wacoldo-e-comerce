@@ -204,6 +204,17 @@ img {
     margin-top: 48px;
 }
 
+.footer a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+.footer a:hover {
+    color: var(--color-secundario);
+    text-decoration: underline;
+}
+
 @media (max-width: 768px) {
     .navbar-contenedor {
         flex-direction: column;
