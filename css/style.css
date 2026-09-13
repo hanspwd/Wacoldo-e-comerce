@@ -1,0 +1,217 @@
+:root {
+    --color-primario: #1f6feb;
+    --color-primario-oscuro: #0f4aad;
+    --color-secundario: #ffab00;
+    --color-texto: #212529;
+    --color-texto-suave: #6c757d;
+    --color-fondo: #f8f9fa;
+    --color-blanco: #ffffff;
+    --color-error: #dc3545;
+    --color-exito: #198754;
+    --color-alerta: #fd7e14;
+    --radio: 8px;
+    --sombra: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--color-texto);
+    background-color: var(--color-fondo);
+    line-height: 1.5;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+.contenedor {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+.navbar {
+    background-color: var(--color-primario);
+    color: var(--color-blanco);
+    padding: 12px 0;
+}
+
+.navbar-contenedor {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-blanco);
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-decoration: none;
+}
+
+.navbar-menu {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-menu a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+}
+
+.navbar-menu a:hover {
+    color: var(--color-blanco);
+    text-decoration: underline;
+}
+
+.tarjeta {
+    background-color: var(--color-blanco);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 16px;
+}
+
+.campo {
+    margin-bottom: 16px;
+}
+
+.campo label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: var(--radio);
+    font-size: 1rem;
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+    outline: none;
+    border-color: var(--color-primario);
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+}
+
+.mensaje-error {
+    color: var(--color-error);
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: none;
+}
+
+.campo-invalido input,
+.campo-invalido select,
+.campo-invalido textarea {
+    border-color: var(--color-error);
+}
+
+.campo-invalido .mensaje-error {
+    display: block;
+}
+
+.alerta {
+    padding: 12px 16px;
+    border-radius: var(--radio);
+    margin-bottom: 16px;
+}
+
+.alerta-error {
+    background-color: #f8d7da;
+    color: var(--color-error);
+}
+
+.alerta-exito {
+    background-color: #d1e7dd;
+    color: var(--color-exito);
+}
+
+.alerta-critico {
+    background-color: #fff3cd;
+    color: var(--color-alerta);
+}
+
+.insignia-critico {
+    display: inline-block;
+    background-color: var(--color-alerta);
+    color: var(--color-blanco);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+.grupo-botones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--radio);
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn-primario {
+    background-color: var(--color-primario);
+    color: var(--color-blanco);
+}
+
+.btn-primario:hover {
+    background-color: var(--color-primario-oscuro);
+}
+
+.btn-secundario {
+    background-color: var(--color-secundario);
+    color: var(--color-texto);
+}
+
+.btn-peligro {
+    background-color: var(--color-error);
+    color: var(--color-blanco);
+}
+
+.footer {
+    background-color: var(--color-primario-oscuro);
+    color: rgba(255, 255, 255, 0.85);
+    padding: 24px 0;
+    margin-top: 48px;
+}
+
+@media (max-width: 768px) {
+    .navbar-contenedor {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .navbar-menu {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
