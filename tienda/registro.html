@@ -13,6 +13,11 @@
         <form id="form-registro" class="tarjeta formulario" novalidate>
             <h1>Registro de usuario</h1>
             <div class="campo">
+                <label for="rut">RUT</label>
+                <input type="text" id="rut" maxlength="12" placeholder="12.345.678-5">
+                <p class="mensaje-error"></p>
+            </div>
+            <div class="campo">
                 <label for="nombre">Nombre completo</label>
                 <input type="text" id="nombre" maxlength="100">
                 <p class="mensaje-error"></p>
@@ -65,11 +70,15 @@
         App.cargarRegiones("region", "comuna");
 
         function validarCampo(id) {
+            const rut = App.valor("rut");
             const nombre = App.valor("nombre");
             const correo = App.valor("correo");
             const password = document.getElementById("password").value;
             const confirmar = document.getElementById("confirmar").value;
             let resultado = { valido: true, mensaje: "" };
+            if (id === "rut") {
+                resultado = Validaciones.validarRut(rut);
+            }
             if (id === "nombre") {
                 resultado = Validaciones.validarRequerido(nombre, "Nombre completo");
                 if (resultado.valido) {
@@ -107,7 +116,7 @@
             return true;
         }
 
-        ["nombre", "correo", "password", "confirmar", "telefono", "region", "comuna"].forEach(function (id) {
+        ["rut", "nombre", "correo", "password", "confirmar", "telefono", "region", "comuna"].forEach(function (id) {
             document.getElementById(id).addEventListener("input", function () {
                 validarCampo(id);
             });
@@ -116,15 +125,23 @@
             });
         });
 
+        document.getElementById("rut").addEventListener("blur", function () {
+            const valor = App.valor("rut");
+            if (valor !== "" && Validaciones.validarRut(valor).valido) {
+                document.getElementById("rut").value = Validaciones.formatearRut(valor);
+            }
+        });
+
         document.getElementById("form-registro").addEventListener("submit", function (e) {
             e.preventDefault();
             App.limpiarErrores("form-registro");
-            const ids = ["nombre", "correo", "password", "confirmar", "telefono", "region"];
+            const ids = ["rut", "nombre", "correo", "password", "confirmar", "telefono", "region"];
             const valido = ids.map(validarCampo).every(function (v) { return v; });
             if (!valido) {
                 return;
             }
             const resultado = App.registrarUsuario({
+                rut: App.valor("rut"),
                 nombre: App.valor("nombre"),
                 correo: App.valor("correo"),
                 password: document.getElementById("password").value,
@@ -133,7 +150,7 @@
                 comuna: App.valor("comuna")
             });
             if (!resultado.exito) {
-                App.mostrarError("correo", resultado.mensaje);
+                App.mostrarError(resultado.campo || "correo", resultado.mensaje);
                 return;
             }
             App.avisar(resultado.mensaje, "exito");

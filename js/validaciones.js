@@ -88,6 +88,68 @@ const Validaciones = (function () {
         return valido("");
     }
 
+    function calcularDigitoVerificador(cuerpo) {
+        let suma = 0;
+        let multiplo = 2;
+        for (let i = cuerpo.length - 1; i >= 0; i--) {
+            suma += parseInt(cuerpo.charAt(i), 10) * multiplo;
+            multiplo = multiplo === 7 ? 2 : multiplo + 1;
+        }
+        const resto = suma % 11;
+        const dvCalculado = 11 - resto;
+        if (dvCalculado === 11) {
+            return "0";
+        }
+        if (dvCalculado === 10) {
+            return "K";
+        }
+        return String(dvCalculado);
+    }
+
+    function limpiarRut(valor) {
+        return limpiar(valor).replace(/[^0-9kK]/g, "").toUpperCase();
+    }
+
+    function formatearRut(valor) {
+        const limpio = limpiarRut(valor);
+        if (limpio.length < 2) {
+            return limpio;
+        }
+        const cuerpo = limpio.slice(0, -1);
+        const dv = limpio.slice(-1);
+        let cuerpoFormateado = "";
+        let count = 0;
+        for (let i = cuerpo.length - 1; i >= 0; i--) {
+            cuerpoFormateado = cuerpo.charAt(i) + cuerpoFormateado;
+            count++;
+            if (count % 3 === 0 && i !== 0) {
+                cuerpoFormateado = "." + cuerpoFormateado;
+            }
+        }
+        return cuerpoFormateado + "-" + dv;
+    }
+
+    function validarRut(valor) {
+        const texto = limpiar(valor);
+        if (texto.length === 0) {
+            return valido("El RUT es obligatorio.");
+        }
+        const formatoValido = /^[0-9]{1,2}\.[0-9]{3}\.[0-9]{3}-[0-9kK]$/i.test(texto) ||
+                              /^[0-9]{7,8}-[0-9kK]$/i.test(texto) ||
+                              /^[0-9]{7,8}[0-9kK]$/i.test(texto);
+        if (!formatoValido) {
+            return valido("El formato del RUT no es válido. Ej: 12.345.678-5 o 12345678-5");
+        }
+        const limpio = limpiarRut(texto);
+        const cuerpo = limpio.slice(0, -1);
+        const digitoVerificador = limpio.slice(-1);
+        const dvEsperado = calcularDigitoVerificador(cuerpo);
+        if (digitoVerificador !== dvEsperado) {
+            return valido("El RUT ingresado no es válido (dígito verificador incorrecto).");
+        }
+        return valido("");
+    }
+
     function validarRun(valor) {
         const run = limpiar(valor);
         if (run.length === 0) {
@@ -101,15 +163,7 @@ const Validaciones = (function () {
         }
         const cuerpo = run.slice(0, -1);
         const digitoVerificador = run.slice(-1).toUpperCase();
-        let suma = 0;
-        let multiplo = 2;
-        for (let i = cuerpo.length - 1; i >= 0; i--) {
-            suma += parseInt(cuerpo.charAt(i), 10) * multiplo;
-            multiplo = multiplo === 7 ? 2 : multiplo + 1;
-        }
-        const resto = suma % 11;
-        const dvCalculado = 11 - resto;
-        const dvEsperado = dvCalculado === 11 ? "0" : dvCalculado === 10 ? "K" : String(dvCalculado);
+        const dvEsperado = calcularDigitoVerificador(cuerpo);
         if (digitoVerificador !== dvEsperado) {
             return valido("El RUN ingresado no es válido.");
         }
@@ -248,6 +302,10 @@ const Validaciones = (function () {
         validarContrasena: validarContrasena,
         validarConfirmacionContrasena: validarConfirmacionContrasena,
         validarRun: validarRun,
+        validarRut: validarRut,
+        calcularDigitoVerificador: calcularDigitoVerificador,
+        formatearRut: formatearRut,
+        limpiarRut: limpiarRut,
         validarCodigoProducto: validarCodigoProducto,
         validarNombreProducto: validarNombreProducto,
         validarDescripcion: validarDescripcion,

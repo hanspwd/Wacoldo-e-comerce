@@ -289,11 +289,23 @@ var App = (function () {
 
     function registrarUsuario(datos) {
         if (buscarUsuarioPorCorreo(datos.correo)) {
-            return { exito: false, mensaje: "El correo ya está registrado." };
+            return { exito: false, campo: "correo", mensaje: "El correo ya está registrado." };
         }
         const lista = obtenerUsuarios();
+        const rutIngresado = datos.rut || datos.run || "";
+        if (rutIngresado) {
+            const rutLimpio = typeof Validaciones !== "undefined" && Validaciones.limpiarRut ? Validaciones.limpiarRut(rutIngresado) : rutIngresado.replace(/[^0-9kK]/g, "").toUpperCase();
+            const existeRut = lista.some(function (u) {
+                const uRut = ((u.run || u.rut || "") + "").replace(/[^0-9kK]/g, "").toUpperCase();
+                return uRut !== "" && uRut === rutLimpio;
+            });
+            if (existeRut) {
+                return { exito: false, campo: "rut", mensaje: "El RUT ya se encuentra registrado." };
+            }
+        }
         lista.push({
-            run: "",
+            run: rutIngresado,
+            rut: rutIngresado,
             nombre: datos.nombre,
             apellidos: "",
             correo: datos.correo,

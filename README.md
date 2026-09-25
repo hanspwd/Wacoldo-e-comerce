@@ -16,7 +16,7 @@ Actualmente el proyecto está diseñado sin Backend, pero con una arquitectura l
 - `tienda/`: Vistas públicas (productos, detalle, carrito, registro, login, contacto, nosotros, blogs, blog-1, blog-2).
 - `admin/`: Vistas privadas (dashboard, productos, producto-form, usuarios, usuario-form).
 - `css/style.css`: Hoja de estilos externa de todo el sitio.
-- `js/validaciones.js`: Reglas de negocio reutilizables (retorna `{valido, mensaje}`).
+- `js/validaciones.js`: Reglas de negocio reutilizables (retorna `{valido, mensaje}`), incluyendo validación completa de RUT/RUN chileno con cálculo de dígito verificador (módulo 11), formateo y normalización.
 - `js/datos.js`: Arreglo base de productos, categorías, tipos de usuario y catálogo persistente.
 - `js/regiones_comunas.js`: Las 16 regiones de Chile con sus comunas.
 - `js/carrito.js`: Lógica y reglas del carrito con persistencia en `localStorage`.
@@ -36,7 +36,7 @@ El desarrollo consta de dos partes principales, cada una con su propio flujo de 
 - **Carrito de Compras:** Tabla con cantidades (+/-), eliminación, cupones de descuento (`DUOC10`, `BIENVENIDA15`), cálculo de total, botón pagar y sello de pago seguro Webpay.
 - **Nosotros & Blogs:** Información de la empresa/equipo y 2 casos curiosos con su detalle.
 - **Contacto:** Formulario con validación (los mensajes se guardan localmente).
-- **Registro e Inicio de Sesión:** Alta de clientes con validación en tiempo real y Región/Comuna dinámicas; el login redirige según el rol.
+- **Registro e Inicio de Sesión:** Alta de clientes con validación en tiempo real (incorporando campo de RUT chileno con validación completa y cálculo de dígito verificador) y Región/Comuna dinámicas; el login redirige según el rol.
 
 ### 2. Vistas del Administrador (Privada)
 
@@ -50,7 +50,7 @@ Acceso protegido por sesión y rol (Administrador total, Vendedor solo productos
 
 - **Correos Electrónicos:** Requeridos, máx. 100 caracteres y solo dominios `@duoc.cl`, `@profesor.duoc.cl` y `@gmail.com`.
 - **Contraseñas:** Requeridas, entre 4 y 10 caracteres, con confirmación.
-- **Identidad (RUN):** Requerido, 7 a 9 caracteres, sin puntos ni guion y con dígito verificador válido (módulo 11).
+- **Identidad (RUT / RUN):** Requerido en registro y mantenedor. Validación completa en JavaScript según el algoritmo Módulo 11 para el cálculo del dígito verificador. Admite formatos con puntos y guion (`12.345.678-5`), con guion (`12345678-5`) y continuos (`123456785`), con autoformateo al salir del campo y validación de unicidad.
 - **Productos:** Código mín. 3, nombre máx. 100, descripción opcional máx. 500, precio positivo con decimales (0 = FREE), stock entero positivo y alerta dinámica de *Stock Crítico*.
 - **Usuarios:** Nombre máx. 50, apellidos máx. 100, dirección máx. 300, tipo (Administrador/Vendedor/Cliente) y Región/Comuna dinámicas.
 - **Contacto:** Nombre máx. 100, correo válido y comentario requerido máx. 500.
