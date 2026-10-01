@@ -1,72 +1,109 @@
-# Tienda Web
+# Tienda Web (E-Commerce Wacoldo)
 
-Desarrollo del **Frontend** de una tienda online básica y su respectivo sistema administrativo, enfocado en estructuración, diseño y validaciones dinámicas.
+Desarrollo del **Frontend** de una tienda online y su respectivo sistema administrativo, migrado y estructurado con **React 19**, **Vite** y **TypeScript**.
 
-Actualmente el proyecto está diseñado sin Backend, pero con una arquitectura lista para integrarse con APIs o servicios externos en un futuro. Toda la persistencia es local (`localStorage` / `sessionStorage`).
+Actualmente el proyecto está diseñado sin Backend, pero con una arquitectura desacoplada y lista para integrarse con APIs o servicios externos (REST/GraphQL/Firebase). Toda la persistencia es local mediante `localStorage` y `sessionStorage`.
 
 ## Tecnologías Utilizadas
 
-- **HTML5**: Estructura clara y semántica de la aplicación (secciones, encabezados, listas).
-- **CSS3**: Hoja de estilos propia y externa (`css/style.css`), diseño responsivo, botones tipo pill, navbar con efecto glass y micro-animaciones (sin frameworks).
-- **JavaScript (vanilla)**: Lógica del lado del cliente, manipulación del DOM, validación de formularios en tiempo real (con mensajes de error dinámicos) y gestión de datos locales (carrito de compras, catálogo, usuarios, sesión y selectores dinámicos de Región/Comuna).
+- **React 19**: Componentes funcionales, hooks (`useState`, `useEffect`, `useMemo`), Context API para estado global (`AuthContext`, `ProductContext`, `CartContext`).
+- **TypeScript**: Tipado estático riguroso para modelos de datos (`Usuario`, `Producto`, `ItemCarrito`), validaciones y props.
+- **Vite 8**: Servidor de desarrollo ultra rápido con Hot Module Replacement (HMR) y empaquetador de producción optimizado.
+- **React Router DOM 7**: Enrutamiento declarativo para vistas públicas, navegación protegida (`ProtectedRoute`) y subrutas administrativas con `<Outlet />`.
+- **CSS3**: Hoja de estilos propia (`css/style.css`), diseño responsivo, botones tipo pill, navbar con efecto glass y micro-animaciones.
+- **React-Bootstrap & Bootstrap 5**: Integrados en las dependencias para componentes UI según preferencias del proyecto.
 
-## Estructura de Carpetas
+## Estructura del Proyecto
 
-- `index.html`: Página principal (Home) de la tienda.
-- `tienda/`: Vistas públicas (productos, detalle, carrito, registro, login, contacto, nosotros, blogs, blog-1, blog-2).
-- `admin/`: Vistas privadas (dashboard, productos, producto-form, usuarios, usuario-form).
-- `css/style.css`: Hoja de estilos externa de todo el sitio.
-- `js/validaciones.js`: Reglas de negocio reutilizables (retorna `{valido, mensaje}`), incluyendo validación completa de RUT/RUN chileno con cálculo de dígito verificador (módulo 11), formateo y normalización.
-- `js/datos.js`: Arreglo base de productos, categorías, tipos de usuario y catálogo persistente.
-- `js/regiones_comunas.js`: Las 16 regiones de Chile con sus comunas.
-- `js/carrito.js`: Lógica y reglas del carrito con persistencia en `localStorage`.
-- `js/app.js`: Código compartido (navbar, footer, insignia del carrito, sesión y roles, cupones).
-- `img/`: Imágenes locales de productos y logo de Webpay.
-- `docs/`: Anexos del proyecto (instrucciones, planillas, ERS y mockups con diagramas de flujo).
+```text
+├── index.html                  # Punto de entrada de la aplicación Vite
+├── vite.config.ts              # Configuración de Vite y plugin de React
+├── tsconfig.json               # Configuración de compilador TypeScript
+├── package.json                # Dependencias y scripts de ejecución
+├── public/                     # Archivos estáticos y multimedia (/img/...)
+├── css/
+│   └── style.css               # Estilos globales y responsive del sitio
+├── src/
+│   ├── main.tsx                # Montaje de la aplicación React
+│   ├── App.tsx                 # Enrutador principal y proveedores de contexto
+│   ├── vite-env.d.ts           # Declaraciones de tipos para assets de Vite
+│   ├── types/
+│   │   └── index.ts            # Interfaces y tipos (Producto, Usuario, Carrito, etc.)
+│   ├── utils/
+│   │   ├── validaciones.ts     # Validaciones de negocio (RUT chileno Módulo 11, correo, etc.)
+│   │   ├── regionesComunas.ts  # 16 regiones de Chile y sus comunas asociadas
+│   │   └── datos.ts            # Semilla inicial de productos, usuarios y cupones
+│   ├── context/
+│   │   ├── AuthContext.tsx     # Estado global de sesión, login, registro y roles
+│   │   ├── ProductContext.tsx  # Estado global de productos y catálogo
+│   │   └── CartContext.tsx     # Estado global de carrito, cupones y totales
+│   ├── components/
+│   │   ├── Navbar.tsx          # Barra de navegación con badge dinámico y sesión
+│   │   ├── Footer.tsx          # Footer con categorías dinámicas y newsletter
+│   │   ├── ProductCard.tsx     # Tarjeta reutilizable con stock y alertas
+│   │   └── ProtectedRoute.tsx  # Guardián de rutas administrativas por rol
+│   └── pages/
+│       ├── Home.tsx            # Portada principal con producto destacado y novedades
+│       ├── Products.tsx        # Catálogo con filtro dinámico por categoría
+│       ├── ProductDetail.tsx   # Ficha de producto, selector de cantidad y relacionados
+│       ├── Cart.tsx            # Carrito de compras, cupones y sello Webpay
+│       ├── Login.tsx           # Inicio de sesión con validación y redirección por rol
+│       ├── Register.tsx        # Registro de clientes con validación completa de RUT
+│       ├── About.tsx           # Información de la empresa y equipo
+│       ├── Blogs.tsx           # Lista de casos y noticias
+│       ├── BlogDetail.tsx      # Detalle de artículos
+│       ├── Contact.tsx         # Formulario de contacto con almacenamiento local
+│       └── admin/
+│           ├── AdminLayout.tsx     # Layout con menú lateral administrativo
+│           ├── Dashboard.tsx       # Estadísticas (KPIs) y accesos rápidos
+│           ├── AdminProducts.tsx   # Mantenedor de productos con alerta de stock crítico
+│           ├── AdminProductForm.tsx# Formulario de creación/edición de productos
+│           ├── AdminUsers.tsx      # Mantenedor de usuarios con RUT/RUN
+│           └── AdminUserForm.tsx   # Formulario de creación/edición de usuarios
+├── tienda/                     # (Respaldo) Vistas vanilla originales
+├── admin/                      # (Respaldo) Vistas admin vanilla originales
+└── index.vanilla.html          # (Respaldo) Home vanilla original
+```
 
-## Estructura del Sistema
+## Reglas de Negocio y Validaciones (TypeScript)
 
-El desarrollo consta de dos partes principales, cada una con su propio flujo de navegación:
-
-### 1. Vistas de la Tienda (Pública)
-
-- **Inicio (Home):** Navbar con logo y carrito con insignia viva, hero con producto destacado, grilla de productos renderizada desde el arreglo JS y footer con categorías clickeables y newsletter.
-- **Productos:** Catálogo con filtro por categoría (admite enlace directo `?categoria=`), imagen, nombre, precio y botón añadir.
-- **Detalle de Producto:** Miga de pan, imagen, precio, descripción, alerta de stock crítico, selector de cantidad y productos relacionados.
-- **Carrito de Compras:** Tabla con cantidades (+/-), eliminación, cupones de descuento (`DUOC10`, `BIENVENIDA15`), cálculo de total, botón pagar y sello de pago seguro Webpay.
-- **Nosotros & Blogs:** Información de la empresa/equipo y 2 casos curiosos con su detalle.
-- **Contacto:** Formulario con validación (los mensajes se guardan localmente).
-- **Registro e Inicio de Sesión:** Alta de clientes con validación en tiempo real (incorporando campo de RUT chileno con validación completa y cálculo de dígito verificador) y Región/Comuna dinámicas; el login redirige según el rol.
-
-### 2. Vistas del Administrador (Privada)
-
-Acceso protegido por sesión y rol (Administrador total, Vendedor solo productos).
-
-- **Dashboard (Home):** Menú lateral, saludo por usuario y estadísticas (productos, stock crítico, usuarios, mensajes).
-- **Mantenedor de Productos:** Listado con resaltado de stock crítico; crear, editar y eliminar (los cambios persisten y se reflejan en la tienda).
-- **Mantenedor de Usuarios:** Listado y formularios (crear/editar) con todas las validaciones de negocio.
-
-## Reglas de Negocio y Validaciones (JavaScript)
-
-- **Correos Electrónicos:** Requeridos, máx. 100 caracteres y solo dominios `@duoc.cl`, `@profesor.duoc.cl` y `@gmail.com`.
-- **Contraseñas:** Requeridas, entre 4 y 10 caracteres, con confirmación.
-- **Identidad (RUT / RUN):** Requerido en registro y mantenedor. Validación completa en JavaScript según el algoritmo Módulo 11 para el cálculo del dígito verificador. Admite formatos con puntos y guion (`12.345.678-5`), con guion (`12345678-5`) y continuos (`123456785`), con autoformateo al salir del campo y validación de unicidad.
+- **Identidad (RUT / RUN chileno):** Validación completa según el algoritmo Módulo 11 para el cálculo del dígito verificador (`0-9` y `K`). Admite formatos con puntos y guion (`12.345.678-5`), con guion (`12345678-5`) y continuos (`123456785`), con autoformateo al salir del campo (`blur`) y validación de unicidad.
+- **Correos Electrónicos:** Requeridos, máx. 100 caracteres y solo dominios institucionales/comerciales permitidos: `@duoc.cl`, `@profesor.duoc.cl` y `@gmail.com`.
+- **Contraseñas:** Requeridas, entre 4 y 10 caracteres, con confirmación coincidente.
 - **Productos:** Código mín. 3, nombre máx. 100, descripción opcional máx. 500, precio positivo con decimales (0 = FREE), stock entero positivo y alerta dinámica de *Stock Crítico*.
-- **Usuarios:** Nombre máx. 50, apellidos máx. 100, dirección máx. 300, tipo (Administrador/Vendedor/Cliente) y Región/Comuna dinámicas.
-- **Contacto:** Nombre máx. 100, correo válido y comentario requerido máx. 500.
-- **Carrito:** Cantidad entera entre 1 y el stock disponible, sin superar stock al acumular, sin stock no se añade y todo persiste en `localStorage`.
-- **Roles:** Administrador (acceso total), Vendedor (solo productos) y Cliente (solo tienda).
+- **Usuarios:** Nombre máx. 50, apellidos máx. 100, dirección máx. 300, tipo (`Administrador` / `Vendedor` / `Cliente`) y selectores dinámicos de Región y Comuna.
+- **Contacto:** Nombre máx. 100, correo válido y comentario requerido máx. 500 caracteres.
+- **Carrito:** Cantidad entera entre 1 y el stock disponible, sin permitir superar stock al acumular. Cupones de descuento activos (`DUOC10` para 10% y `BIENVENIDA15` para 15%). Persistencia automática en `localStorage`.
+- **Roles:**
+  - `Administrador`: Acceso total (Dashboard, Productos y Usuarios).
+  - `Vendedor`: Acceso restringido (Dashboard y Productos).
+  - `Cliente`: Acceso a la tienda pública.
 
 ## Usuarios de Prueba
 
-- Administrador: `admin@duoc.cl` / `admin123`
-- Vendedor: `vendedor@duoc.cl` / `vende123`
-- El registro de la tienda crea usuarios Cliente.
+- **Administrador:** `admin@duoc.cl` / `admin123`
+- **Vendedor:** `vendedor@duoc.cl` / `vende123`
+- El registro de nuevos usuarios en la tienda pública crea perfiles de rol **Cliente**.
 
-## Cómo Ejecutar
+## Cómo Ejecutar el Proyecto
 
-Sin compilación ni dependencias: abrir `index.html` en el navegador.
+1. **Instalar dependencias:**
+   ```bash
+   npm install
+   ```
 
-## Evolución del Proyecto
+2. **Iniciar servidor de desarrollo (Vite):**
+   ```bash
+   npm run dev
+   ```
+   Abre la URL proporcionada (por defecto `http://localhost:3000`).
 
-Toda la interfaz y las interacciones funcionan en el navegador y quedan preparadas para, en las siguientes fases, reemplazar la persistencia local y estática por el consumo de datos reales a través de servicios web y bases de datos.
+3. **Compilar para producción (TypeScript + Vite):**
+   ```bash
+   npm run build
+   ```
+
+4. **Previsualizar la versión de producción:**
+   ```bash
+   npm run preview
+   ```
