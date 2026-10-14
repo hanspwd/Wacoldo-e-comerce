@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { validarCorreo, validarContrasena } from '../utils/validaciones';
+import { useAuth } from '@/context/AuthContext';
+import { validarCorreo, validarContrasena } from '@/utils/validaciones';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();

@@ -1,4 +1,4 @@
-import { Producto, Usuario, TipoUsuario } from '../types';
+import { Producto, Usuario, TipoUsuario } from '@/types';
 
 export const CATEGORIAS: string[] = ['Tecnología', 'Ropa', 'Hogar', 'Deportes', 'Alimentos'];
 

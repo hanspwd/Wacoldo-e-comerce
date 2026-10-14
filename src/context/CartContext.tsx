@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ItemCarrito, Producto, ResumenCarrito } from '../types';
-import { CUPONES, CLAVE_CARRITO } from '../utils/datos';
+import { ItemCarrito, Producto, ResumenCarrito } from '@/types';
+import { CUPONES, CLAVE_CARRITO } from '@/utils/datos';
 
 interface CartContextType {
   items: ItemCarrito[];

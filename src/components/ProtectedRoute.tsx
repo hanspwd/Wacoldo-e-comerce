@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { TipoUsuario } from '../types';
+import { useAuth } from '@/context/AuthContext';
+import { TipoUsuario } from '@/types';
 
 interface ProtectedRouteProps {
   children: React.ReactElement;

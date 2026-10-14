@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import {
   validarRut,
   formatearRut,
@@ -11,8 +11,8 @@ import {
   validarConfirmacionContrasena,
   validarTelefono,
   validarRegionYComuna,
-} from '../utils/validaciones';
-import { obtenerRegiones, obtenerComunas } from '../utils/regionesComunas';
+} from '@/utils/validaciones';
+import { obtenerRegiones, obtenerComunas } from '@/utils/regionesComunas';
 
 export const Register: React.FC = () => {
   const { register } = useAuth();

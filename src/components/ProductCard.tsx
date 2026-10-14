@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Producto } from '../types';
-import { useCart } from '../context/CartContext';
-import { formatearPrecio, esStockCritico } from '../utils/validaciones';
+import { Producto } from '@/types';
+import { useCart } from '@/context/CartContext';
+import { formatearPrecio, esStockCritico } from '@/utils/validaciones';
 
 interface ProductCardProps {
   producto: Producto;

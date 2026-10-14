@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useProducts } from '../context/ProductContext';
-import { ProductCard } from '../components/ProductCard';
+import { useProducts } from '@/context/ProductContext';
+import { ProductCard } from '@/components/ProductCard';
 
 export const Products: React.FC = () => {
   const { productos, categorias } = useProducts();

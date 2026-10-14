@@ -1,4 +1,4 @@
-import { ResultadoValidacion } from '../types';
+import { ResultadoValidacion } from '@/types';
 
 export const DOMINIOS_PERMITIDOS = ['@duoc.cl', '@profesor.duoc.cl', '@gmail.com'];
 export const EMAIL_MAX = 100;

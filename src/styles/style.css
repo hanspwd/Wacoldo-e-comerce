@@ -250,6 +250,7 @@ img {
     gap: 24px;
     margin: 24px 0;
     padding: 32px;
+    box-shadow: none;
 }
 
 .hero-texto {

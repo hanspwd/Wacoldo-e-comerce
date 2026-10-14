@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useProducts } from '../context/ProductContext';
-import { useCart } from '../context/CartContext';
-import { ProductCard } from '../components/ProductCard';
-import { formatearPrecio, esStockCritico } from '../utils/validaciones';
+import { useProducts } from '@/context/ProductContext';
+import { useCart } from '@/context/CartContext';
+import { ProductCard } from '@/components/ProductCard';
+import { formatearPrecio, esStockCritico } from '@/utils/validaciones';
 
 export const ProductDetail: React.FC = () => {
   const { codigo } = useParams<{ codigo: string }>();

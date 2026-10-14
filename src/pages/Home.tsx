@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useProducts } from '../context/ProductContext';
-import { ProductCard } from '../components/ProductCard';
+import { useProducts } from '@/context/ProductContext';
+import { ProductCard } from '@/components/ProductCard';
 
 export const Home: React.FC = () => {
   const { productos } = useProducts();

@@ -10,8 +10,8 @@ Actualmente el proyecto está diseñado sin Backend, pero con una arquitectura d
 - **TypeScript**: Tipado estático riguroso para modelos de datos (`Usuario`, `Producto`, `ItemCarrito`), validaciones y props.
 - **Vite 8**: Servidor de desarrollo ultra rápido con Hot Module Replacement (HMR) y empaquetador de producción optimizado.
 - **React Router DOM 7**: Enrutamiento declarativo para vistas públicas, navegación protegida (`ProtectedRoute`) y subrutas administrativas con `<Outlet />`.
-- **CSS3**: Hoja de estilos propia (`css/style.css`), diseño responsivo, botones tipo pill, navbar con efecto glass y micro-animaciones.
-- **React-Bootstrap & Bootstrap 5**: Integrados en las dependencias para componentes UI según preferencias del proyecto.
+- **CSS3**: Hoja de estilos propia (`src/styles/style.css`), diseño responsivo, botones tipo pill, navbar con efecto glass y micro-animaciones.
+- **React-Bootstrap & Bootstrap 5**: Previstos para incorporarse de forma gradual como base de componentes UI, reemplazando progresivamente los estilos propios según se requiera.
 
 ## Estructura del Proyecto
 
@@ -21,12 +21,12 @@ Actualmente el proyecto está diseñado sin Backend, pero con una arquitectura d
 ├── tsconfig.json               # Configuración de compilador TypeScript
 ├── package.json                # Dependencias y scripts de ejecución
 ├── public/                     # Archivos estáticos y multimedia (/img/...)
-├── css/
-│   └── style.css               # Estilos globales y responsive del sitio
 ├── src/
 │   ├── main.tsx                # Montaje de la aplicación React
 │   ├── App.tsx                 # Enrutador principal y proveedores de contexto
 │   ├── vite-env.d.ts           # Declaraciones de tipos para assets de Vite
+│   ├── styles/
+│   │   └── style.css           # Estilos globales y responsive del sitio
 │   ├── types/
 │   │   └── index.ts            # Interfaces y tipos (Producto, Usuario, Carrito, etc.)
 │   ├── utils/
@@ -60,10 +60,10 @@ Actualmente el proyecto está diseñado sin Backend, pero con una arquitectura d
 │           ├── AdminProductForm.tsx# Formulario de creación/edición de productos
 │           ├── AdminUsers.tsx      # Mantenedor de usuarios con RUT/RUN
 │           └── AdminUserForm.tsx   # Formulario de creación/edición de usuarios
-├── tienda/                     # (Respaldo) Vistas vanilla originales
-├── admin/                      # (Respaldo) Vistas admin vanilla originales
-└── index.vanilla.html          # (Respaldo) Home vanilla original
+└── legacy/                     # (Respaldo) Implementación vanilla original (HTML/CSS/JS)
 ```
+
+> Los imports internos usan el alias `@/` (configurado en `tsconfig.json` y `vite.config.ts`), apuntando a `src/`.
 
 ## Reglas de Negocio y Validaciones (TypeScript)
 

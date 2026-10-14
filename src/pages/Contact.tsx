@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { validarRequerido, validarLargo, validarCorreo, validarComentario } from '../utils/validaciones';
-import { CLAVE_MENSAJES } from '../utils/datos';
+import { validarRequerido, validarLargo, validarCorreo, validarComentario } from '@/utils/validaciones';
+import { CLAVE_MENSAJES } from '@/utils/datos';
 
 export const Contact: React.FC = () => {
   const [nombre, setNombre] = useState('');

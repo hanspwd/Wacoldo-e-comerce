@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Usuario, TipoUsuario } from '../types';
-import { usuariosIniciales, CLAVE_USUARIOS, CLAVE_SESION } from '../utils/datos';
-import { limpiarRut } from '../utils/validaciones';
+import { Usuario, TipoUsuario } from '@/types';
+import { usuariosIniciales, CLAVE_USUARIOS, CLAVE_SESION } from '@/utils/datos';
+import { limpiarRut } from '@/utils/validaciones';
 
 interface AuthContextType {
   user: Usuario | null;

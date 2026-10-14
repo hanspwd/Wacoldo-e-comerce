@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CATEGORIAS } from '../utils/datos';
+import { CATEGORIAS } from '@/utils/datos';
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = useState('');

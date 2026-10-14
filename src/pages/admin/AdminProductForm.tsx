@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { useProducts } from '../../context/ProductContext';
+import { useProducts } from '@/context/ProductContext';
 import {
   validarCodigoProducto,
   validarNombreProducto,
@@ -10,7 +10,7 @@ import {
   validarStockCritico,
   validarCategoria,
   esStockCritico,
-} from '../../utils/validaciones';
+} from '@/utils/validaciones';
 
 const imagenesDisponibles = [
   { label: 'Sin imagen', valor: '' },

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Producto } from '../types';
-import { productosIniciales, CATEGORIAS, CLAVE_CATALOGO } from '../utils/datos';
+import { Producto } from '@/types';
+import { productosIniciales, CATEGORIAS, CLAVE_CATALOGO } from '@/utils/datos';
 
 interface ProductContextType {
   productos: Producto[];

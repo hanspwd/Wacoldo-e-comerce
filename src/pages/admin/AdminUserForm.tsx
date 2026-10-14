@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { TipoUsuario, Usuario } from '../../types';
-import { TIPOS_USUARIO } from '../../utils/datos';
+import { useAuth } from '@/context/AuthContext';
+import { TipoUsuario, Usuario } from '@/types';
+import { TIPOS_USUARIO } from '@/utils/datos';
 import {
   validarRut,
   formatearRut,
@@ -13,8 +13,8 @@ import {
   validarConfirmacionContrasena,
   validarDireccion,
   validarRegionYComuna,
-} from '../../utils/validaciones';
-import { obtenerRegiones, obtenerComunas } from '../../utils/regionesComunas';
+} from '@/utils/validaciones';
+import { obtenerRegiones, obtenerComunas } from '@/utils/regionesComunas';
 
 export const AdminUserForm: React.FC = () => {
   const { usuarios, guardarUsuarioAdmin } = useAuth();

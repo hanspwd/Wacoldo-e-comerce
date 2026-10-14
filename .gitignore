@@ -7,6 +7,9 @@ node_modules
 dist
 build
 
+# Documentos de trabajo (planillas, PDFs, etc.)
+docs-rellenar/
+
 # Misc / OS
 .DS_Store
 *.local

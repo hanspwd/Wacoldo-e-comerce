@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useProducts } from '../../context/ProductContext';
-import { esStockCritico } from '../../utils/validaciones';
-import { CLAVE_MENSAJES } from '../../utils/datos';
+import { useAuth } from '@/context/AuthContext';
+import { useProducts } from '@/context/ProductContext';
+import { esStockCritico } from '@/utils/validaciones';
+import { CLAVE_MENSAJES } from '@/utils/datos';
 
 export const Dashboard: React.FC = () => {
   const { user, usuarios } = useAuth();

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useProducts } from '../../context/ProductContext';
-import { formatearPrecio, esStockCritico } from '../../utils/validaciones';
+import { useProducts } from '@/context/ProductContext';
+import { formatearPrecio, esStockCritico } from '@/utils/validaciones';
 
 export const AdminProducts: React.FC = () => {
   const { productos, eliminarProducto } = useProducts();
