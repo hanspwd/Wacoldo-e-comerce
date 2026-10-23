@@ -1,182 +1,192 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useProducts } from '@/context/ProductContext';
-import { formatearPrecio } from '@/utils/validaciones';
+import { useToast } from '@/context/ToastContext';
+import { ActionBar } from '@/components/ui/ActionGroup';
+import { CartItemRow } from '@/components/cart/CartItemRow';
+import { CartSummary } from '@/components/cart/CartSummary';
+import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Icon } from '@/components/ui/Icon';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
-export const Cart: React.FC = () => {
+export const Cart = () => {
   const {
     items,
+    totalCantidad,
     resumen,
-    cambiarCantidad,
+    establecerCantidad,
     eliminarItem,
     vaciarCarrito,
     aplicarCupon,
     removerCupon,
   } = useCart();
   const { productos } = useProducts();
+  const { showToast } = useToast();
 
-  const [codigoCupon, setCodigoCupon] = useState('');
-  const [toast, setToast] = useState<{ texto: string; tipo: 'exito' | 'error' } | null>(null);
+  const [confirmarVaciar, setConfirmarVaciar] = useState(false);
+  const [pedidoConfirmado, setPedidoConfirmado] = useState<string | null>(null);
 
-  const handleAplicarCupon = () => {
-    if (!codigoCupon.trim()) return;
-    const res = aplicarCupon(codigoCupon);
-    setToast({ texto: res.mensaje, tipo: res.exito ? 'exito' : 'error' });
-    setTimeout(() => setToast(null), 3500);
+  usePageTitle('Mi carrito');
+
+  const categoriasPorCodigo = useMemo(
+    () => new Map(productos.map((producto) => [producto.codigo, producto.categoria])),
+    [productos]
+  );
+
+  const handleCantidad = (codigo: string, cantidad: number) => {
+    const resultado = establecerCantidad(codigo, cantidad);
+    if (!resultado.exito && resultado.mensaje) {
+      showToast(resultado.mensaje, 'danger');
+    }
   };
 
-  const handlePagar = () => {
+  const handleEliminar = (codigo: string) => {
+    eliminarItem(codigo);
+    showToast('Producto eliminado del carrito.', 'info');
+  };
+
+  const handleCheckout = () => {
+    const id = `WS-${Date.now().toString().slice(-6)}`;
+    setPedidoConfirmado(id);
     vaciarCarrito();
-    setToast({ texto: '¡Gracias por tu compra! Pedido generado con éxito.', tipo: 'exito' });
+    showToast('¡Gracias por tu compra! Tu pedido fue generado con éxito.');
   };
+
+  const handleVaciar = () => {
+    vaciarCarrito();
+    setConfirmarVaciar(false);
+    showToast('Carrito vaciado.', 'info');
+  };
+
+  if (pedidoConfirmado) {
+    return (
+      <div className="page container page-stack">
+        <Card className="order-success">
+          <div className="card-body">
+            <span className="order-success__icon" aria-hidden="true">
+              <Icon name="check" size={34} />
+            </span>
+            <p className="page-header__eyebrow">Pedido confirmado</p>
+            <h1 className="order-success__title">¡Gracias por tu compra!</h1>
+            <p className="order-success__text">
+              Tu pedido <strong>{pedidoConfirmado}</strong> fue generado correctamente. En una
+              tienda con backend recibirías el detalle por correo.
+            </p>
+            <ActionBar
+              nodes={[
+                {
+                  keyId: 'seguir',
+                  label: 'Seguir comprando',
+                  to: '/productos',
+                  variant: 'primary',
+                  icon: 'cart',
+                },
+                {
+                  keyId: 'inicio',
+                  label: 'Volver al inicio',
+                  to: '/',
+                  variant: 'outline',
+                },
+              ]}
+              align="center"
+            />
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
-      <main className="contenedor">
-        <h1>Mi carrito de compras</h1>
-        <div className="tarjeta">
-          <p>Tu carrito está vacío.</p>
-          <Link className="btn btn-primario" to="/productos">
-            Ver productos
-          </Link>
-        </div>
-      </main>
+      <div className="page container page-stack">
+        <PageHeader eyebrow="Carrito" title="Mi carrito de compras" />
+        <EmptyState
+          icon="cart"
+          title="Tu carrito está vacío"
+          description="Explora el catálogo y añade tus productos favoritos. Estamos seguros de que encontrarás algo especial."
+          action={
+            <ActionBar
+              nodes={[
+                {
+                  keyId: 'productos',
+                  label: 'Ver productos',
+                  to: '/productos',
+                  variant: 'primary',
+                  icon: 'arrow-right',
+                  iconPosition: 'end',
+                },
+              ]}
+            />
+          }
+        />
+      </div>
     );
   }
 
   return (
-    <main className="contenedor">
-      <h1>Mi carrito de compras</h1>
-      <div className="tarjeta">
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Descripción</th>
-              <th>Precio</th>
-              <th>Cantidad</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => {
-              const producto = productos.find((p) => p.codigo === item.codigo);
-              const categoria = producto ? producto.categoria : '';
-              return (
-                <tr key={item.codigo}>
-                  <td>
-                    <img className="carrito-img" src={item.imagen} alt={item.nombre} />
-                  </td>
-                  <td>
-                    <strong>{item.nombre}</strong>
-                    <br />
-                    <span>{categoria}</span>
-                  </td>
-                  <td>{item.precio === 0 ? 'Gratis' : formatearPrecio(item.precio)}</td>
-                  <td>
-                    <div className="grupo-botones">
-                      <button
-                        className="btn btn-secundario"
-                        type="button"
-                        onClick={() => cambiarCantidad(item.codigo, -1)}
-                      >
-                        -
-                      </button>
-                      <span style={{ padding: '0 8px', fontWeight: 600 }}>{item.cantidad}</span>
-                      <button
-                        className="btn btn-secundario"
-                        type="button"
-                        onClick={() => {
-                          const res = cambiarCantidad(item.codigo, 1);
-                          if (!res.exito && res.mensaje) {
-                            setToast({ texto: res.mensaje, tipo: 'error' });
-                            setTimeout(() => setToast(null), 3000);
-                          }
-                        }}
-                      >
-                        +
-                      </button>
-                      <button
-                        className="btn btn-peligro"
-                        type="button"
-                        onClick={() => eliminarItem(item.codigo)}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+    <div className="page container page-stack">
+      <PageHeader
+        eyebrow="Carrito"
+        title="Mi carrito de compras"
+        description={`Tienes ${totalCantidad} ${totalCantidad === 1 ? 'producto' : 'productos'} listos para comprar.`}
+        actions={[
+          {
+            keyId: 'seguir',
+            label: 'Seguir comprando',
+            to: '/productos',
+            variant: 'outline',
+            icon: 'arrow-left',
+          },
+        ]}
+      />
 
-        <p className="total-carrito">
-          TOTAL: <strong>{formatearPrecio(resumen.total)}</strong>
-        </p>
+      <div className="row g-4 align-items-start">
+        <div className="col-12 col-xl-8">
+          <Card className="cart-items">
+            <div className="card-body">
+              <div className="cart-items__header">
+                <h2 className="h5 mb-0">Productos</h2>
+                <span className="text-secondary">{items.length} ítems</span>
+              </div>
+              {items.map((item) => (
+                <CartItemRow
+                  key={item.codigo}
+                  item={item}
+                  categoria={categoriasPorCodigo.get(item.codigo)}
+                  onQuantityChange={handleCantidad}
+                  onRemove={handleEliminar}
+                />
+              ))}
+            </div>
+          </Card>
+        </div>
 
-        {resumen.descuento > 0 && (
-          <p style={{ color: 'var(--color-exito)', fontWeight: 600 }}>
-            Descuento aplicado ({resumen.cuponAplicado}): -{formatearPrecio(resumen.descuento)} (
-            {resumen.porcentajeDescuento}%)
-            <button
-              onClick={removerCupon}
-              style={{
-                marginLeft: '12px',
-                background: 'none',
-                border: 'none',
-                color: 'var(--color-error)',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-              }}
-            >
-              Quitar
-            </button>
-          </p>
-        )}
-
-        <div className="campo campo-cupon">
-          <label htmlFor="cupon">Ingrese el cupón de descuento</label>
-          <div className="grupo-botones">
-            <input
-              type="text"
-              id="cupon"
-              placeholder="Ej: DUOC10 o BIENVENIDA15"
-              value={codigoCupon}
-              onChange={(e) => setCodigoCupon(e.target.value)}
+        <div className="col-12 col-xl-4">
+          <div className="cart-summary-wrap">
+            <CartSummary
+              resumen={resumen}
+              itemCount={totalCantidad}
+              onApplyCoupon={aplicarCupon}
+              onRemoveCoupon={removerCupon}
+              onCheckout={handleCheckout}
+              onRequestClear={() => setConfirmarVaciar(true)}
             />
-            <button className="btn btn-secundario" type="button" onClick={handleAplicarCupon}>
-              Aplicar
-            </button>
           </div>
         </div>
-
-        {toast && (
-          <p
-            style={{
-              color: toast.tipo === 'exito' ? 'var(--color-exito)' : 'var(--color-error)',
-              fontWeight: 600,
-              margin: '12px 0',
-            }}
-          >
-            {toast.texto}
-          </p>
-        )}
-
-        <div className="grupo-botones" style={{ marginTop: '16px' }}>
-          <button className="btn btn-primario" type="button" onClick={handlePagar}>
-            Pagar
-          </button>
-          <button className="btn btn-peligro" type="button" onClick={vaciarCarrito}>
-            Vaciar carrito
-          </button>
-        </div>
-
-        <p className="pago-seguro" style={{ marginTop: '24px' }}>
-          Pago 100% seguro con{' '}
-          <img className="pago-logo" src="/img/integracion-webpay.png" alt="Webpay Plus" />
-        </p>
       </div>
-    </main>
+
+      <ConfirmDialog
+        open={confirmarVaciar}
+        title="¿Vaciar el carrito?"
+        description="Se quitarán todos los productos y el cupón aplicado. Esta acción no se puede deshacer."
+        confirmLabel="Sí, vaciar carrito"
+        cancelLabel="Mantener productos"
+        onConfirm={handleVaciar}
+        onCancel={() => setConfirmarVaciar(false)}
+      />
+    </div>
   );
 };

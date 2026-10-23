@@ -1,0 +1,7 @@
+/* Punto de entrada de estilos. El orden importa: tema -> base -> componentes -> layouts -> páginas. */
+@import './theme.css';
+@import './base.css';
+@import './components.css';
+@import './layout.css';
+@import './pages.css';
+@import './admin.css';

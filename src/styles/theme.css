@@ -1,0 +1,66 @@
+:root {
+  --brand-950: #04101f;
+  --brand-900: #071a33;
+  --brand-800: #0b2545;
+  --brand-700: #123c69;
+  --brand-600: #1f6feb;
+  --brand-500: #3b82f6;
+  --brand-100: #e8f1ff;
+
+  --accent-600: #d98f00;
+  --accent-500: #ffab00;
+  --accent-100: #fff3d1;
+
+  --success-600: #198754;
+  --success-100: #e7f7ef;
+  --danger-600: #dc3545;
+  --danger-100: #fdecee;
+  --warning-600: #b26a00;
+  --warning-100: #fff5e5;
+  --info-600: #0b7285;
+  --info-100: #e7f6fa;
+
+  --surface: #ffffff;
+  --surface-2: #f5f7fb;
+  --surface-3: #eef2f9;
+  --text: #122033;
+  --text-muted: #667085;
+  --border: #e4e9f2;
+  --border-strong: #d3dbe8;
+
+  --shadow-sm: 0 2px 8px rgba(15, 37, 70, 0.06);
+  --shadow-md: 0 14px 34px rgba(15, 37, 70, 0.1);
+  --shadow-lg: 0 24px 60px rgba(15, 37, 70, 0.16);
+
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+
+  --bs-body-font-family: var(--font-sans);
+  --bs-body-color: var(--text);
+  --bs-body-bg: var(--surface-2);
+  --bs-border-color: var(--border);
+  --bs-primary: #1f6feb;
+  --bs-primary-rgb: 31, 111, 235;
+  --bs-link-color: var(--brand-600);
+  --bs-link-hover-color: var(--brand-700);
+  --bs-focus-ring-color: rgba(31, 111, 235, 0.24);
+  --bs-border-radius: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius);
+  --bs-border-radius-xl: var(--radius-lg);
+}
+
+.text-accent {
+  color: var(--accent-500) !important;
+}
+
+.bg-surface {
+  background-color: var(--surface-2) !important;
+}
+
+.text-secondary {
+  color: var(--text-muted) !important;
+}

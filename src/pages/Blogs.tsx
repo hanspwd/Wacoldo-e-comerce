@@ -1,46 +1,53 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { BLOG_POSTS } from '@/data';
+import { BlogCard } from '@/components/blog/BlogCard';
+import { ActionBar } from '@/components/ui/ActionGroup';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
-interface Post {
-  id: string;
-  titulo: string;
-  resumen: string;
-  imagen: string;
-}
+export const Blogs = () => {
+  usePageTitle('Blogs');
 
-const blogsList: Post[] = [
-  {
-    id: '1',
-    titulo: 'CASO CURIOSO #1: El secreto del café de grano',
-    resumen:
-      '¿Sabías que el café de grano conserva mejor su aroma cuando se muele justo antes de prepararlo? Te contamos cómo elegir el tueste ideal para tu método de preparación favorito.',
-    imagen: '/img/cafe.png',
-  },
-  {
-    id: '2',
-    titulo: 'CASO CURIOSO #2: ¿Cuándo renovar tus zapatillas?',
-    resumen:
-      'La amortiguación de tus zapatillas pierde eficacia con el uso diario. Descubre cada cuánto conviene renovarlas y cómo elegir el modelo ideal según tu pisada.',
-    imagen: '/img/zapatillas_flex.png',
-  },
-];
-
-export const Blogs: React.FC = () => {
   return (
-    <main className="contenedor">
-      <h1>NOTICIAS IMPORTANTES</h1>
-      {blogsList.map((blog) => (
-        <article key={blog.id} className="tarjeta blog-resumen" style={{ marginBottom: '24px' }}>
-          <div>
-            <h2>{blog.titulo}</h2>
-            <p>{blog.resumen}</p>
-            <Link className="btn btn-primario" to={`/blog/${blog.id}`}>
-              Ver caso
-            </Link>
+    <div className="page container page-stack">
+      <PageHeader
+        eyebrow="Blog"
+        title="Noticias y casos curiosos"
+        description="Ideas, consejos y datos útiles para sacar el máximo provecho a tus productos favoritos."
+      />
+
+      <div className="row g-4">
+        {BLOG_POSTS.map((post) => (
+          <div className="col-12 col-lg-6" key={post.id}>
+            <BlogCard post={post} />
           </div>
-          <img className="blog-img" src={blog.imagen} alt={blog.titulo} />
-        </article>
-      ))}
-    </main>
+        ))}
+      </div>
+
+      <section className="page-section">
+        <div className="home-cta">
+          <div>
+            <p className="home-cta__eyebrow">¿Tienes una idea para el blog?</p>
+            <h2 className="home-cta__title">Nos encantaría leerte.</h2>
+            <p className="home-cta__text">
+              Escríbenos con tus preguntas o sugerencias y las tendremos en cuenta para próximos
+              artículos.
+            </p>
+          </div>
+          <ActionBar
+            nodes={[
+              {
+                keyId: 'contacto',
+                label: 'Enviar sugerencia',
+                to: '/contacto',
+                variant: 'accent',
+                size: 'lg',
+                icon: 'mail',
+              },
+            ]}
+            align="end"
+          />
+        </div>
+      </section>
+    </div>
   );
 };

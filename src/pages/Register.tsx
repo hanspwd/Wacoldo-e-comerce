@@ -1,285 +1,316 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import type { FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import {
-  validarRut,
   formatearRut,
-  validarRequerido,
-  validarLargo,
-  validarCorreo,
-  validarContrasena,
   validarConfirmacionContrasena,
+  validarContrasena,
+  validarCorreo,
+  validarLargo,
+  validarRequerido,
+  validarRut,
   validarTelefono,
-  validarRegionYComuna,
 } from '@/utils/validaciones';
-import { obtenerRegiones, obtenerComunas } from '@/utils/regionesComunas';
+import { ActionBar } from '@/components/ui/ActionGroup';
+import { Card } from '@/components/ui/Card';
+import { Field, TextInput } from '@/components/ui/Field';
+import { Icon } from '@/components/ui/Icon';
+import { FormActions } from '@/components/forms/FormActions';
+import { FormCol, FormGrid } from '@/components/forms/FormGrid';
+import { FormSection } from '@/components/forms/FormSection';
+import { RegionComunaFields } from '@/components/forms/RegionComunaFields';
+import { useForm } from '@/hooks/useForm';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
-export const Register: React.FC = () => {
+interface RegisterValues {
+  rut: string;
+  nombre: string;
+  correo: string;
+  password: string;
+  confirmar: string;
+  telefono: string;
+  region: string;
+  comuna: string;
+  [key: string]: string;
+}
+
+export const Register = () => {
   const { register } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const [rut, setRut] = useState('');
-  const [nombre, setNombre] = useState('');
-  const [correo, setCorreo] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmar, setConfirmar] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [region, setRegion] = useState('');
-  const [comuna, setComuna] = useState('');
+  usePageTitle('Crear cuenta');
 
-  const [errores, setErrores] = useState<Record<string, string>>({});
-  const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+  const { values, errors, setValue, setErrors, validateAll, validateField } =
+    useForm<RegisterValues>(
+      {
+        rut: '',
+        nombre: '',
+        correo: '',
+        password: '',
+        confirmar: '',
+        telefono: '',
+        region: '',
+        comuna: '',
+      },
+      {
+        validate: (current) => {
+          const nextErrors: Partial<Record<keyof RegisterValues, string>> = {};
 
-  const regiones = obtenerRegiones();
-  const comunas = region ? obtenerComunas(region) : [];
+          const rut = validarRut(current.rut);
+          if (!rut.valido) nextErrors.rut = rut.mensaje;
 
-  const validarCampo = (campo: string, valor: string): boolean => {
-    let res = { valido: true, mensaje: '' };
+          let nombre = validarRequerido(current.nombre, 'Nombre completo');
+          if (nombre.valido) nombre = validarLargo(current.nombre, null, 100, 'Nombre completo');
+          if (!nombre.valido) nextErrors.nombre = nombre.mensaje;
 
-    if (campo === 'rut') {
-      res = validarRut(valor);
-    } else if (campo === 'nombre') {
-      res = validarRequerido(valor, 'Nombre completo');
-      if (res.valido) {
-        res = validarLargo(valor, null, 100, 'Nombre completo');
+          const correo = validarCorreo(current.correo);
+          if (!correo.valido) nextErrors.correo = correo.mensaje;
+
+          const password = validarContrasena(current.password);
+          if (!password.valido) nextErrors.password = password.mensaje;
+
+          const confirmacion = validarConfirmacionContrasena(
+            current.password,
+            current.confirmar
+          );
+          if (!confirmacion.valido) nextErrors.confirmar = confirmacion.mensaje;
+
+          const telefono = validarTelefono(current.telefono);
+          if (!telefono.valido) nextErrors.telefono = telefono.mensaje;
+
+          if (!current.region) nextErrors.region = 'Debes seleccionar una región.';
+          if (!current.comuna) nextErrors.comuna = 'Debes seleccionar una comuna.';
+
+          return nextErrors;
+        },
       }
-    } else if (campo === 'correo') {
-      res = validarCorreo(valor);
-    } else if (campo === 'password') {
-      res = validarContrasena(valor);
-    } else if (campo === 'confirmar') {
-      res = validarConfirmacionContrasena(password, valor);
-    } else if (campo === 'telefono') {
-      res = validarTelefono(valor);
-    } else if (campo === 'region' || campo === 'comuna') {
-      res = validarRegionYComuna(campo === 'region' ? valor : region, campo === 'comuna' ? valor : comuna);
-      if (!res.valido) {
-        setErrores((prev) => ({ ...prev, region: res.mensaje, comuna: res.mensaje }));
-        return false;
-      }
-      setErrores((prev) => {
-        const copy = { ...prev };
-        delete copy.region;
-        delete copy.comuna;
-        return copy;
-      });
-      return true;
-    }
-
-    if (!res.valido) {
-      setErrores((prev) => ({ ...prev, [campo]: res.mensaje }));
-      return false;
-    }
-
-    setErrores((prev) => {
-      const copy = { ...prev };
-      delete copy[campo];
-      return copy;
-    });
-    return true;
-  };
+    );
 
   const handleRutBlur = () => {
-    if (rut.trim()) {
-      const res = validarRut(rut);
-      if (res.valido) {
-        setRut(formatearRut(rut));
-      }
+    if (values.rut.trim() && validarRut(values.rut).valido) {
+      setValue('rut', formatearRut(values.rut));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
 
-    const okRut = validarCampo('rut', rut);
-    const okNombre = validarCampo('nombre', nombre);
-    const okCorreo = validarCampo('correo', correo);
-    const okPass = validarCampo('password', password);
-    const okConf = validarCampo('confirmar', confirmar);
-    const okTel = validarCampo('telefono', telefono);
-    const okZona = validarCampo('region', region);
-
-    if (!okRut || !okNombre || !okCorreo || !okPass || !okConf || !okTel || !okZona) {
-      return;
-    }
+    if (!validateAll()) return;
 
     const resultado = register({
-      rut,
-      nombre,
-      correo,
-      password,
-      telefono,
-      region,
-      comuna,
+      rut: values.rut,
+      nombre: values.nombre,
+      correo: values.correo,
+      password: values.password,
+      telefono: values.telefono,
+      region: values.region,
+      comuna: values.comuna,
     });
 
     if (!resultado.exito) {
-      setErrores((prev) => ({
+      setErrors((prev) => ({
         ...prev,
-        [resultado.campo || 'correo']: resultado.mensaje,
+        [resultado.campo ?? 'correo']: resultado.mensaje,
       }));
       return;
     }
 
-    setMensajeExito(resultado.mensaje);
-    setTimeout(() => {
-      navigate('/');
-    }, 1500);
+    showToast(resultado.mensaje);
+    navigate('/');
   };
 
   return (
-    <main className="contenedor">
-      <form id="form-registro" className="tarjeta formulario" onSubmit={handleSubmit} noValidate>
-        <h1>Registro de usuario</h1>
-
-        {mensajeExito && (
-          <div className="alerta alerta-exito" style={{ marginBottom: '16px' }}>
-            {mensajeExito}
+    <div className="page auth-page">
+      <div className="container">
+        <div className="row g-4 g-lg-5">
+          <div className="col-12 col-lg-4">
+            <div className="auth-aside auth-aside--sticky">
+              <span className="hero-eyebrow">
+                <Icon name="sparkles" size={17} />
+                Nuevo en Wacoldo
+              </span>
+              <h1 className="auth-aside__title">Crea tu cuenta y compra en minutos.</h1>
+              <p className="auth-aside__text">
+                Solo necesitas tus datos básicos. Podrás guardar tu carrito, revisar tus compras y
+                recibir novedades.
+              </p>
+              <ul className="auth-benefits">
+                <li><Icon name="check" size={18} /> Registro gratuito y sin letra chica.</li>
+                <li><Icon name="shield" size={18} /> Validación segura de tus datos.</li>
+                <li><Icon name="truck" size={18} /> Despacho a todo Chile.</li>
+              </ul>
+              <ActionBar
+                nodes={[
+                  {
+                    keyId: 'login',
+                    label: 'Ya tengo cuenta',
+                    to: '/login',
+                    variant: 'outline',
+                    icon: 'arrow-left',
+                  },
+                ]}
+              />
+            </div>
           </div>
-        )}
 
-        <div className={`campo ${errores.rut ? 'campo-invalido' : ''}`}>
-          <label htmlFor="rut">RUT</label>
-          <input
-            type="text"
-            id="rut"
-            maxLength={12}
-            placeholder="12.345.678-5"
-            value={rut}
-            onChange={(e) => {
-              setRut(e.target.value);
-              validarCampo('rut', e.target.value);
-            }}
-            onBlur={handleRutBlur}
-          />
-          {errores.rut && <p className="mensaje-error" style={{ display: 'block' }}>{errores.rut}</p>}
+          <div className="col-12 col-lg-8">
+            <Card className="auth-card auth-card--wide">
+              <div className="card-body">
+                <p className="page-header__eyebrow">Registro</p>
+                <h2 className="auth-card__title">Crea tu cuenta</h2>
+                <p className="auth-card__subtitle">
+                  Completa los datos para comenzar a comprar.
+                </p>
+
+                <form onSubmit={handleSubmit} noValidate>
+                  <FormSection title="Datos personales" description="Cuéntanos quién eres.">
+                    <FormGrid>
+                      <FormCol span={6}>
+                        <Field id="rut" label="RUT" error={errors.rut} hint="Ej: 12.345.678-5" required>
+                          <TextInput
+                            id="rut"
+                            name="rut"
+                            value={values.rut}
+                            maxLength={12}
+                            placeholder="12.345.678-5"
+                            invalid={Boolean(errors.rut)}
+                            autoComplete="off"
+                            onChange={(event) => setValue('rut', event.target.value)}
+                            onBlur={() => {
+                              handleRutBlur();
+                              validateField('rut');
+                            }}
+                          />
+                        </Field>
+                      </FormCol>
+
+                      <FormCol span={6}>
+                        <Field id="nombre" label="Nombre completo" error={errors.nombre} required>
+                          <TextInput
+                            id="nombre"
+                            name="nombre"
+                            value={values.nombre}
+                            maxLength={100}
+                            invalid={Boolean(errors.nombre)}
+                            autoComplete="name"
+                            onChange={(event) => setValue('nombre', event.target.value)}
+                            onBlur={() => validateField('nombre')}
+                          />
+                        </Field>
+                      </FormCol>
+
+                      <FormCol span={6}>
+                        <Field id="correo" label="Correo" error={errors.correo} required>
+                          <TextInput
+                            id="correo"
+                            name="correo"
+                            type="email"
+                            value={values.correo}
+                            maxLength={100}
+                            invalid={Boolean(errors.correo)}
+                            autoComplete="email"
+                            placeholder="tucorreo@duoc.cl"
+                            onChange={(event) => setValue('correo', event.target.value)}
+                            onBlur={() => validateField('correo')}
+                          />
+                        </Field>
+                      </FormCol>
+
+                      <FormCol span={6}>
+                        <Field
+                          id="telefono"
+                          label="Teléfono (opcional)"
+                          error={errors.telefono}
+                          hint="Solo números, entre 8 y 15 dígitos."
+                        >
+                          <TextInput
+                            id="telefono"
+                            name="telefono"
+                            type="tel"
+                            value={values.telefono}
+                            maxLength={15}
+                            invalid={Boolean(errors.telefono)}
+                            autoComplete="tel"
+                            onChange={(event) => setValue('telefono', event.target.value)}
+                            onBlur={() => validateField('telefono')}
+                          />
+                        </Field>
+                      </FormCol>
+                    </FormGrid>
+                  </FormSection>
+
+                  <FormSection title="Seguridad" description="Elige una contraseña fácil de recordar.">
+                    <FormGrid>
+                      <FormCol span={6}>
+                        <Field id="password" label="Contraseña" error={errors.password} required>
+                          <TextInput
+                            id="password"
+                            name="password"
+                            type="password"
+                            value={values.password}
+                            maxLength={10}
+                            invalid={Boolean(errors.password)}
+                            autoComplete="new-password"
+                            onChange={(event) => setValue('password', event.target.value)}
+                            onBlur={() => validateField('password')}
+                          />
+                        </Field>
+                      </FormCol>
+
+                      <FormCol span={6}>
+                        <Field
+                          id="confirmar"
+                          label="Confirmar contraseña"
+                          error={errors.confirmar}
+                          required
+                        >
+                          <TextInput
+                            id="confirmar"
+                            name="confirmar"
+                            type="password"
+                            value={values.confirmar}
+                            maxLength={10}
+                            invalid={Boolean(errors.confirmar)}
+                            autoComplete="new-password"
+                            onChange={(event) => setValue('confirmar', event.target.value)}
+                            onBlur={() => validateField('confirmar')}
+                          />
+                        </Field>
+                      </FormCol>
+                    </FormGrid>
+                  </FormSection>
+
+                  <FormSection title="Ubicación" description="Así podremos coordinar tu despacho.">
+                    <FormGrid>
+                      <RegionComunaFields
+                        region={values.region}
+                        comuna={values.comuna}
+                        regionError={errors.region}
+                        comunaError={errors.comuna}
+                        onRegionChange={(value) => {
+                          setValue('region', value);
+                          setValue('comuna', '');
+                        }}
+                        onComunaChange={(value) => setValue('comuna', value)}
+                        onRegionBlur={() => validateField('region')}
+                        onComunaBlur={() => validateField('comuna')}
+                      />
+                    </FormGrid>
+                  </FormSection>
+
+                  <FormActions
+                    submitLabel="Crear mi cuenta"
+                    cancelTo="/login"
+                    cancelLabel="Ya tengo cuenta"
+                  />
+                </form>
+              </div>
+            </Card>
+          </div>
         </div>
-
-        <div className={`campo ${errores.nombre ? 'campo-invalido' : ''}`}>
-          <label htmlFor="nombre">Nombre completo</label>
-          <input
-            type="text"
-            id="nombre"
-            maxLength={100}
-            value={nombre}
-            onChange={(e) => {
-              setNombre(e.target.value);
-              validarCampo('nombre', e.target.value);
-            }}
-          />
-          {errores.nombre && <p className="mensaje-error" style={{ display: 'block' }}>{errores.nombre}</p>}
-        </div>
-
-        <div className={`campo ${errores.correo ? 'campo-invalido' : ''}`}>
-          <label htmlFor="correo">Correo</label>
-          <input
-            type="email"
-            id="correo"
-            maxLength={100}
-            value={correo}
-            onChange={(e) => {
-              setCorreo(e.target.value);
-              validarCampo('correo', e.target.value);
-            }}
-          />
-          {errores.correo && <p className="mensaje-error" style={{ display: 'block' }}>{errores.correo}</p>}
-        </div>
-
-        <div className={`campo ${errores.password ? 'campo-invalido' : ''}`}>
-          <label htmlFor="password">Contraseña</label>
-          <input
-            type="password"
-            id="password"
-            maxLength={10}
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              validarCampo('password', e.target.value);
-            }}
-          />
-          {errores.password && <p className="mensaje-error" style={{ display: 'block' }}>{errores.password}</p>}
-        </div>
-
-        <div className={`campo ${errores.confirmar ? 'campo-invalido' : ''}`}>
-          <label htmlFor="confirmar">Confirmar contraseña</label>
-          <input
-            type="password"
-            id="confirmar"
-            maxLength={10}
-            value={confirmar}
-            onChange={(e) => {
-              setConfirmar(e.target.value);
-              validarCampo('confirmar', e.target.value);
-            }}
-          />
-          {errores.confirmar && <p className="mensaje-error" style={{ display: 'block' }}>{errores.confirmar}</p>}
-        </div>
-
-        <div className={`campo ${errores.telefono ? 'campo-invalido' : ''}`}>
-          <label htmlFor="telefono">Teléfono (opcional)</label>
-          <input
-            type="text"
-            id="telefono"
-            maxLength={15}
-            value={telefono}
-            onChange={(e) => {
-              setTelefono(e.target.value);
-              validarCampo('telefono', e.target.value);
-            }}
-          />
-          {errores.telefono && <p className="mensaje-error" style={{ display: 'block' }}>{errores.telefono}</p>}
-        </div>
-
-        <div className={`campo ${errores.region ? 'campo-invalido' : ''}`}>
-          <label htmlFor="region">Región</label>
-          <select
-            id="region"
-            value={region}
-            onChange={(e) => {
-              const nuevaRegion = e.target.value;
-              setRegion(nuevaRegion);
-              setComuna('');
-              validarCampo('region', nuevaRegion);
-            }}
-          >
-            <option value="">-- Seleccione la región --</option>
-            {regiones.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-          {errores.region && <p className="mensaje-error" style={{ display: 'block' }}>{errores.region}</p>}
-        </div>
-
-        <div className={`campo ${errores.comuna ? 'campo-invalido' : ''}`}>
-          <label htmlFor="comuna">Comuna</label>
-          <select
-            id="comuna"
-            value={comuna}
-            disabled={!region || comunas.length === 0}
-            onChange={(e) => {
-              setComuna(e.target.value);
-              validarCampo('comuna', e.target.value);
-            }}
-          >
-            <option value="">-- Seleccione la comuna --</option>
-            {comunas.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          {errores.comuna && <p className="mensaje-error" style={{ display: 'block' }}>{errores.comuna}</p>}
-        </div>
-
-        <button className="btn btn-primario" type="submit">
-          Registrar
-        </button>
-        <p style={{ marginTop: '16px' }}>
-          ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
-        </p>
-      </form>
-    </main>
+      </div>
+    </div>
   );
 };

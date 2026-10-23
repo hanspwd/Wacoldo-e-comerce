@@ -1,124 +1,199 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useProducts } from '@/context/ProductContext';
+import { useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
-import { ProductCard } from '@/components/ProductCard';
-import { formatearPrecio, esStockCritico } from '@/utils/validaciones';
+import { useProducts } from '@/context/ProductContext';
+import { useToast } from '@/context/ToastContext';
+import { ActionBar } from '@/components/ui/ActionGroup';
+import type { ActionNode } from '@/components/ui/ActionGroup';
+import { Badge } from '@/components/ui/Badge';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Icon } from '@/components/ui/Icon';
+import { Price } from '@/components/ui/Price';
+import { ProductBadges } from '@/components/product/ProductBadges';
+import { ProductGrid } from '@/components/product/ProductGrid';
+import { QuantityStepper } from '@/components/ui/QuantityStepper';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
-export const ProductDetail: React.FC = () => {
+const BENEFICIOS = [
+  { icon: 'truck' as const, title: 'Despacho a todo Chile', text: 'Recibe en la comodidad de tu hogar.' },
+  { icon: 'shield' as const, title: 'Compra protegida', text: 'Pago seguro con Webpay Plus.' },
+  { icon: 'heart' as const, title: 'Atención cercana', text: 'Te acompañamos antes y después de comprar.' },
+];
+
+export const ProductDetail = () => {
   const { codigo } = useParams<{ codigo: string }>();
   const { productos, obtenerProducto } = useProducts();
   const { agregarProducto } = useCart();
+  const { showToast } = useToast();
 
-  const producto = codigo ? obtenerProducto(decodeURIComponent(codigo)) : undefined;
-  const [cantidad, setCantidad] = useState(1);
-  const [mensaje, setMensaje] = useState<{ texto: string; tipo: 'exito' | 'error' } | null>(null);
+  const codigoProducto = codigo ? decodeURIComponent(codigo) : '';
+  const producto = useMemo(
+    () => (codigoProducto ? obtenerProducto(codigoProducto) : undefined),
+    [codigoProducto, obtenerProducto]
+  );
+
+  const [cantidadState, setCantidadState] = useState({
+    codigo: codigoProducto,
+    cantidad: 1,
+  });
+  const cantidad =
+    cantidadState.codigo === codigoProducto ? cantidadState.cantidad : 1;
+  const setCantidad = (nuevaCantidad: number) => {
+    setCantidadState({ codigo: codigoProducto, cantidad: nuevaCantidad });
+  };
+
+  usePageTitle(producto?.nombre ?? 'Producto');
+
+  const relacionados = useMemo(() => {
+    if (!producto) return [];
+    return productos
+      .filter((item) => item.categoria === producto.categoria && item.codigo !== producto.codigo)
+      .slice(0, 4);
+  }, [producto, productos]);
 
   if (!producto) {
     return (
-      <main className="contenedor">
-        <div className="tarjeta">
-          <p>Producto no encontrado.</p>
-          <Link className="btn btn-primario" to="/productos">
-            Volver a productos
-          </Link>
-        </div>
-      </main>
+      <div className="page container page-stack">
+        <EmptyState
+          icon="search"
+          title="Producto no encontrado"
+          description="El producto que buscas no existe o dejó de estar disponible."
+          action={
+            <ActionBar
+              nodes={[
+                {
+                  keyId: 'volver',
+                  label: 'Volver a productos',
+                  to: '/productos',
+                  variant: 'primary',
+                  icon: 'arrow-left',
+                },
+              ]}
+            />
+          }
+        />
+      </div>
     );
   }
 
   const sinStock = producto.stock === 0;
-  const stockCritico = !sinStock && esStockCritico(producto.stock, producto.stockCritico);
-  const esGratis = Number(producto.precio) === 0;
-
-  const handleAnadir = () => {
-    const res = agregarProducto(producto, cantidad);
-    setMensaje({ texto: res.mensaje, tipo: res.exito ? 'exito' : 'error' });
-    setTimeout(() => setMensaje(null), 3500);
-  };
-
-  const relacionados = productos
-    .filter((p) => p.categoria === producto.categoria && p.codigo !== producto.codigo)
-    .slice(0, 4);
+  const acciones: ActionNode[] = [
+    {
+      keyId: 'agregar',
+      label: sinStock ? 'Producto agotado' : 'Añadir al carrito',
+      variant: 'primary',
+      size: 'lg',
+      icon: 'cart',
+      disabled: sinStock,
+      onClick: () => {
+        const resultado = agregarProducto(producto, cantidad);
+        showToast(resultado.mensaje, resultado.exito ? 'success' : 'danger');
+      },
+    },
+    {
+      keyId: 'volver',
+      label: 'Seguir comprando',
+      to: '/productos',
+      variant: 'outline',
+      size: 'lg',
+    },
+  ];
 
   return (
-    <main className="contenedor">
-      <p className="migas">
-        <Link to="/">Home</Link> &gt;{' '}
-        <Link to={`/productos?categoria=${encodeURIComponent(producto.categoria)}`}>{producto.categoria}</Link> &gt;{' '}
-        <span>{producto.nombre}</span>
-      </p>
+    <div className="page container page-stack">
+      <Breadcrumbs
+        items={[
+          { label: 'Inicio', to: '/' },
+          {
+            label: producto.categoria,
+            to: `/productos?categoria=${encodeURIComponent(producto.categoria)}`,
+          },
+          { label: producto.nombre },
+        ]}
+      />
 
-      <div className="tarjeta">
-        <div className="detalle-grid">
-          <div>
-            <img className="detalle-img" src={producto.imagen} alt={producto.nombre} />
-          </div>
-          <div>
-            <h1>{producto.nombre}</h1>
-            <p className="producto-precio">{esGratis ? 'Gratis' : formatearPrecio(producto.precio)}</p>
-            <p>{producto.descripcion}</p>
-            <p>
-              {sinStock && <span className="insignia-sin-stock">Sin stock</span>}
-              {stockCritico && <span className="insignia-critico">¡Stock crítico!</span>}
-              {esGratis && <span className="insignia-gratis">FREE</span>}
-            </p>
-
-            <div className="campo campo-cantidad">
-              <label htmlFor="cantidad">Cantidad</label>
-              <input
-                type="number"
-                id="cantidad"
-                value={cantidad}
-                min={1}
-                max={producto.stock}
-                disabled={sinStock}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10);
-                  setCantidad(isNaN(val) ? 1 : Math.max(1, Math.min(producto.stock, val)));
-                }}
-              />
+      <div className="row g-4 g-lg-5">
+        <div className="col-12 col-lg-6">
+          <Card className="product-detail__media">
+            <img src={producto.imagen} alt={producto.nombre} className="product-detail__image" />
+            <div className="product-detail__media-footer">
+              <Badge tone="primary">{producto.categoria}</Badge>
+              <span>SKU: {producto.codigo}</span>
             </div>
+          </Card>
+        </div>
 
-            {mensaje && (
-              <p
-                style={{
-                  color: mensaje.tipo === 'exito' ? 'var(--color-exito)' : 'var(--color-error)',
-                  fontWeight: 600,
-                  marginBottom: '12px',
-                }}
-              >
-                {mensaje.texto}
-              </p>
-            )}
+        <div className="col-12 col-lg-6">
+          <Card className="product-detail__info">
+            <div className="card-body">
+              <ProductBadges producto={producto} />
+              <h1 className="product-detail__title">{producto.nombre}</h1>
+              <Price value={producto.precio} size="lg" />
+              <p className="product-detail__description">{producto.descripcion}</p>
 
-            <div className="grupo-botones">
-              <button
-                className="btn btn-primario"
-                type="button"
-                onClick={handleAnadir}
-                disabled={sinStock}
-              >
-                {sinStock ? 'Sin stock' : 'Añadir al carrito'}
-              </button>
-              <Link className="btn btn-secundario" to="/productos">
-                Volver
-              </Link>
+              <div className="product-detail__stock">
+                <Icon name={sinStock ? 'alert' : 'check'} size={18} />
+                <span>
+                  {sinStock
+                    ? 'Sin unidades disponibles por ahora.'
+                    : `${producto.stock} unidades disponibles en stock.`}
+                </span>
+              </div>
+
+              <div className="product-detail__purchase">
+                <div>
+                  <span className="form-label fw-semibold d-block">Cantidad</span>
+                  <QuantityStepper
+                    value={cantidad}
+                    max={Math.max(1, producto.stock)}
+                    disabled={sinStock}
+                    onChange={setCantidad}
+                    label={`Cantidad de ${producto.nombre}`}
+                  />
+                </div>
+                <span className="product-detail__subtotal">
+                  Total: <Price value={producto.precio * cantidad} size="md" />
+                </span>
+              </div>
+
+              <ActionBar nodes={acciones} className="product-detail__actions" />
+
+              <ul className="product-detail__benefits">
+                {BENEFICIOS.map((beneficio) => (
+                  <li key={beneficio.title}>
+                    <span className="product-detail__benefit-icon">
+                      <Icon name={beneficio.icon} size={18} />
+                    </span>
+                    <div>
+                      <strong>{beneficio.title}</strong>
+                      <span>{beneficio.text}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
 
       {relacionados.length > 0 && (
-        <section style={{ marginTop: '32px' }}>
-          <h2>Productos relacionados</h2>
-          <div className="grid-productos">
-            {relacionados.map((p) => (
-              <ProductCard key={p.codigo} producto={p} />
-            ))}
+        <section className="page-section">
+          <div className="section-header">
+            <div>
+              <h2 className="section-header__title">También te puede interesar</h2>
+              <p className="section-header__description">
+                Más productos de la categoría {producto.categoria}.
+              </p>
+            </div>
+            <Link to={`/productos?categoria=${encodeURIComponent(producto.categoria)}`}>
+              Ver categoría
+            </Link>
           </div>
+          <ProductGrid productos={relacionados} />
         </section>
       )}
-    </main>
+    </div>
   );
 };

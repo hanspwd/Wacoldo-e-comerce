@@ -1,37 +1,86 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 import { useProducts } from '@/context/ProductContext';
-import { ProductCard } from '@/components/ProductCard';
+import { Hero } from '@/components/home/Hero';
+import { CategoryStrip } from '@/components/home/CategoryStrip';
+import { ProductGrid } from '@/components/product/ProductGrid';
+import { ActionBar } from '@/components/ui/ActionGroup';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
-export const Home: React.FC = () => {
-  const { productos } = useProducts();
+export const Home = () => {
+  const { productos, categorias } = useProducts();
+  const destacados = useMemo(() => productos.slice(0, 4), [productos]);
+
+  usePageTitle('Inicio');
 
   return (
-    <main className="contenedor">
-      <section className="hero tarjeta">
-        <div className="hero-texto">
-          <h1>Ecommerce-wacoldo</h1>
-          <p>
-            Descubre nuestro catálogo con lo mejor en tecnología, ropa, hogar, deportes y alimentos.
-            Compra fácil, rápido y seguro.
-          </p>
-          <Link className="btn btn-primario" to="/productos">
-            Ver productos
-          </Link>
-        </div>
-        <div className="hero-imagen">
-          <img src="/img/ariculares_inalambricos.png" alt="Producto destacado" />
-        </div>
+    <div className="page">
+      <Hero producto={productos[0]} />
+
+      <section className="container page-section">
+        <SectionHeader
+          title="Explora por categoría"
+          description="Encuentra rápido lo que necesitas en nuestro catálogo."
+        />
+        <CategoryStrip categories={categorias} />
       </section>
 
-      <section>
-        <h2>Productos destacados</h2>
-        <div className="grid-productos">
-          {productos.map((producto) => (
-            <ProductCard key={producto.codigo} producto={producto} />
-          ))}
+      <section className="container page-section">
+        <SectionHeader
+          title="Productos destacados"
+          description="Una selección de lo más buscado por nuestros clientes."
+          action={
+            <ActionBar
+              nodes={[
+                {
+                  keyId: 'ver-catalogo',
+                  label: 'Ver catálogo completo',
+                  to: '/productos',
+                  variant: 'outline',
+                  icon: 'arrow-right',
+                  iconPosition: 'end',
+                },
+              ]}
+              wrap={false}
+            />
+          }
+        />
+        <ProductGrid productos={destacados} />
+      </section>
+
+      <section className="container page-section">
+        <div className="home-cta">
+          <div>
+            <p className="home-cta__eyebrow">Compra con confianza</p>
+            <h2 className="home-cta__title">Una experiencia simple, segura y pensada para ti.</h2>
+            <p className="home-cta__text">
+              Validación de datos, stock en tiempo real, cupones de descuento y pago protegido con
+              Webpay Plus.
+            </p>
+          </div>
+          <ActionBar
+            nodes={[
+              {
+                keyId: 'empezar',
+                label: 'Empezar a comprar',
+                to: '/productos',
+                variant: 'accent',
+                size: 'lg',
+                icon: 'cart',
+              },
+              {
+                keyId: 'contacto',
+                label: 'Hablar con nosotros',
+                to: '/contacto',
+                variant: 'ghost',
+                size: 'lg',
+                icon: 'mail',
+              },
+            ]}
+            align="end"
+          />
         </div>
       </section>
-    </main>
+    </div>
   );
 };

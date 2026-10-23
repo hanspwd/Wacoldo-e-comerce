@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Producto } from '@/types';
-import { productosIniciales, CATEGORIAS, CLAVE_CATALOGO } from '@/utils/datos';
+import { CATEGORIAS, CLAVE_CATALOGO, productosIniciales } from '@/data';
+import { guardarJSON, leerJSON } from '@/services/storage';
 
 interface ProductContextType {
   productos: Producto[];
@@ -14,62 +15,57 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [productos, setProductos] = useState<Producto[]>(() => {
-    try {
-      const guardados = localStorage.getItem(CLAVE_CATALOGO);
-      if (guardados) {
-        const parsed = JSON.parse(guardados);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch {
-      // fallback
-    }
-    return productosIniciales;
+    const guardados = leerJSON<Producto[]>(CLAVE_CATALOGO, productosIniciales);
+    return Array.isArray(guardados) && guardados.length > 0 ? guardados : productosIniciales;
   });
 
   useEffect(() => {
-    try {
-      localStorage.setItem(CLAVE_CATALOGO, JSON.stringify(productos));
-    } catch {
-      // ignore
-    }
+    guardarJSON(CLAVE_CATALOGO, productos);
   }, [productos]);
 
-  const obtenerProducto = (codigo: string) => {
-    return productos.find((p) => p.codigo === codigo);
-  };
-
-  const guardarProducto = (producto: Producto, enEdicion: boolean) => {
-    if (!enEdicion) {
-      if (productos.some((p) => p.codigo === producto.codigo)) {
-        return { exito: false, mensaje: 'Ya existe un producto con este código.' };
-      }
-      setProductos((prev) => [...prev, producto]);
-    } else {
-      setProductos((prev) => prev.map((p) => (p.codigo === producto.codigo ? producto : p)));
-    }
-    return { exito: true, mensaje: enEdicion ? 'Producto actualizado.' : 'Producto creado con éxito.' };
-  };
-
-  const eliminarProducto = (codigo: string) => {
-    setProductos((prev) => prev.filter((p) => p.codigo !== codigo));
-    return true;
-  };
-
-  return (
-    <ProductContext.Provider
-      value={{
-        productos,
-        categorias: CATEGORIAS,
-        obtenerProducto,
-        guardarProducto,
-        eliminarProducto,
-      }}
-    >
-      {children}
-    </ProductContext.Provider>
+  const obtenerProducto = useCallback(
+    (codigo: string) => productos.find((producto) => producto.codigo === codigo),
+    [productos]
   );
+
+  const guardarProducto = useCallback(
+    (producto: Producto, enEdicion: boolean) => {
+      if (!enEdicion) {
+        if (productos.some((item) => item.codigo === producto.codigo)) {
+          return { exito: false, mensaje: 'Ya existe un producto con este código.' };
+        }
+        setProductos((prev) => [...prev, producto]);
+      } else {
+        setProductos((prev) =>
+          prev.map((item) => (item.codigo === producto.codigo ? producto : item))
+        );
+      }
+
+      return {
+        exito: true,
+        mensaje: enEdicion ? 'Producto actualizado con éxito.' : 'Producto creado con éxito.',
+      };
+    },
+    [productos]
+  );
+
+  const eliminarProducto = useCallback((codigo: string) => {
+    setProductos((prev) => prev.filter((producto) => producto.codigo !== codigo));
+    return true;
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      productos,
+      categorias: CATEGORIAS,
+      obtenerProducto,
+      guardarProducto,
+      eliminarProducto,
+    }),
+    [productos, obtenerProducto, guardarProducto, eliminarProducto]
+  );
+
+  return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
 };
 
 export const useProducts = () => {

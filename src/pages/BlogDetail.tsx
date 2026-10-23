@@ -1,69 +1,97 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { BLOG_POSTS, obtenerBlogPost } from '@/data';
+import { BlogCard } from '@/components/blog/BlogCard';
+import { ActionBar } from '@/components/ui/ActionGroup';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Icon } from '@/components/ui/Icon';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
-const articulosDetallados: Record<
-  string,
-  {
-    titulo: string;
-    subtitulo: string;
-    imagen: string;
-    parrafos: string[];
-  }
-> = {
-  '1': {
-    titulo: 'Caso curioso #1',
-    subtitulo: 'CASO CURIOSO #1: El secreto del café de grano',
-    imagen: '/img/cafe.png',
-    parrafos: [
-      'El café de grano recién molido libera cientos de compuestos aromáticos que se pierden en pocos minutos. Por eso, moler justo antes de preparar es el paso más simple para mejorar tu taza.',
-      'Para métodos filtrados como la prensa francesa conviene una molienda gruesa, mientras que para el espresso se necesita una molienda fina y uniforme. El tueste medio, como el de nuestro Café de Grano Premium 500g, equilibra dulzor y acidez para el consumo diario.',
-      'Guarda tus granos en un envase hermético, lejos de la luz y el calor, y evita el refrigerador: la humedad es su peor enemiga.',
-    ],
-  },
-  '2': {
-    titulo: 'Caso curioso #2',
-    subtitulo: 'CASO CURIOSO #2: ¿Cuándo renovar tus zapatillas?',
-    imagen: '/img/zapatillas_flex.png',
-    parrafos: [
-      'La espuma de amortiguación de unas zapatillas de uso diario se compacta con el tiempo y deja de absorber impactos. En promedio, conviene renovarlas cada 600 a 800 kilómetros de uso, o una vez al año si las usas todos los días.',
-      'Señales de desgaste: suela lisa en la zona del talón, arrugas profundas en la entresuela e incomodidad en rodillas o tobillos después de caminar.',
-      'Un modelo liviano con buena ventilación, como nuestras Zapatillas Urbanas Flex, es ideal para el uso diario y la actividad física ligera.',
-    ],
-  },
-};
-
-export const BlogDetail: React.FC = () => {
+export const BlogDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const articulo = id ? articulosDetallados[id] : null;
+  const articulo = id ? obtenerBlogPost(id) : undefined;
+
+  usePageTitle(articulo?.titulo ?? 'Artículo');
 
   if (!articulo) {
     return (
-      <main className="contenedor">
-        <article className="tarjeta">
-          <p>Artículo no encontrado.</p>
-          <Link className="btn btn-primario" to="/blogs">
-            Volver a blogs
-          </Link>
-        </article>
-      </main>
+      <div className="page container page-stack">
+        <EmptyState
+          icon="search"
+          title="Artículo no encontrado"
+          description="Puede que el enlace haya cambiado o que el artículo ya no esté disponible."
+          action={
+            <ActionBar
+              nodes={[
+                {
+                  keyId: 'volver',
+                  label: 'Volver a blogs',
+                  to: '/blogs',
+                  variant: 'primary',
+                  icon: 'arrow-left',
+                },
+              ]}
+            />
+          }
+        />
+      </div>
     );
   }
 
+  const relacionados = BLOG_POSTS.filter((post) => post.id !== articulo.id);
+
   return (
-    <main className="contenedor">
-      <article className="tarjeta">
-        <p className="migas">
-          <Link to="/blogs">Blogs</Link> &gt; {articulo.titulo}
-        </p>
-        <h1>{articulo.subtitulo}</h1>
-        <img className="blog-img-detalle" src={articulo.imagen} alt={articulo.subtitulo} />
-        {articulo.parrafos.map((p, idx) => (
-          <p key={idx}>{p}</p>
-        ))}
-        <Link className="btn btn-secundario" to="/blogs" style={{ marginTop: '16px', display: 'inline-block' }}>
-          Volver a blogs
-        </Link>
+    <div className="page container page-stack">
+      <Breadcrumbs items={[{ label: 'Blogs', to: '/blogs' }, { label: articulo.titulo }]} />
+
+      <article className="row g-4 g-lg-5">
+        <div className="col-12 col-lg-8">
+          <Card className="blog-detail">
+            <div className="card-body">
+              <span className="blog-detail__category">{articulo.categoria}</span>
+              <h1 className="blog-detail__title">{articulo.subtitulo}</h1>
+              <div className="blog-detail__meta">
+                <span><Icon name="clock" size={16} /> {articulo.tiempoLectura}</span>
+                <span>{articulo.fecha}</span>
+              </div>
+              <img
+                src={articulo.imagen}
+                alt={articulo.titulo}
+                className="blog-detail__image"
+                loading="eager"
+                decoding="async"
+              />
+              <div className="blog-detail__content">
+                {articulo.parrafos.map((parrafo, index) => (
+                  <p key={index}>{parrafo}</p>
+                ))}
+              </div>
+              <ActionBar
+                nodes={[
+                  {
+                    keyId: 'volver',
+                    label: 'Volver a blogs',
+                    to: '/blogs',
+                    variant: 'outline',
+                    icon: 'arrow-left',
+                  },
+                ]}
+              />
+            </div>
+          </Card>
+        </div>
+
+        <aside className="col-12 col-lg-4">
+          <div className="blog-detail__aside">
+            <SectionHeader title="Sigue leyendo" description="Otros artículos que te pueden interesar." />
+            {relacionados.map((post) => (
+              <BlogCard key={post.id} post={post} />
+            ))}
+          </div>
+        </aside>
       </article>
-    </main>
+    </div>
   );
 };

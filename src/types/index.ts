@@ -47,11 +47,36 @@ export interface MensajeContacto {
   id?: string;
   nombre: string;
   correo: string;
-  comentario: string;
+  comentario?: string;
+  contenido?: string;
   fecha: string;
 }
 
 export interface ResultadoValidacion {
   valido: boolean;
   mensaje: string;
+}
+
+export interface ResultadoOperacion {
+  exito: boolean;
+  mensaje: string;
+}
+
+export interface BlogPost {
+  id: string;
+  titulo: string;
+  subtitulo: string;
+  resumen: string;
+  imagen: string;
+  categoria: string;
+  fecha: string;
+  tiempoLectura: string;
+  parrafos: string[];
+}
+
+export interface MiembroEquipo {
+  nombre: string;
+  rol: string;
+  descripcion: string;
+  iniciales: string;
 }

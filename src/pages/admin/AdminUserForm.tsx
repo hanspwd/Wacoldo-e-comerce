@@ -1,318 +1,439 @@
-import React, { useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useMemo } from 'react';
+import type { FormEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { TipoUsuario, Usuario } from '@/types';
-import { TIPOS_USUARIO } from '@/utils/datos';
+import { useToast } from '@/context/ToastContext';
+import type { TipoUsuario, Usuario } from '@/types';
+import { TIPOS_USUARIO } from '@/data';
 import {
-  validarRut,
   formatearRut,
-  validarNombreUsuario,
   validarApellidos,
-  validarCorreo,
-  validarContrasena,
   validarConfirmacionContrasena,
+  validarContrasena,
+  validarCorreo,
   validarDireccion,
-  validarRegionYComuna,
+  validarNombreUsuario,
+  validarRut,
+  validarTelefono,
 } from '@/utils/validaciones';
-import { obtenerRegiones, obtenerComunas } from '@/utils/regionesComunas';
+import { ActionBar } from '@/components/ui/ActionGroup';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Field, Select, TextInput } from '@/components/ui/Field';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { FormActions } from '@/components/forms/FormActions';
+import { FormCol, FormGrid } from '@/components/forms/FormGrid';
+import { FormSection } from '@/components/forms/FormSection';
+import { RegionComunaFields } from '@/components/forms/RegionComunaFields';
+import { useForm } from '@/hooks/useForm';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
-export const AdminUserForm: React.FC = () => {
+interface UserFormValues {
+  run: string;
+  nombre: string;
+  apellidos: string;
+  correo: string;
+  password: string;
+  confirmar: string;
+  telefono: string;
+  fechaNacimiento: string;
+  tipo: string;
+  region: string;
+  comuna: string;
+  direccion: string;
+  [key: string]: string;
+}
+
+export const AdminUserForm = () => {
   const { usuarios, guardarUsuarioAdmin } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const correoParam = searchParams.get('correo');
   const enEdicion = Boolean(correoParam);
+  const usuarioOriginal = useMemo(
+    () =>
+      correoParam
+        ? usuarios.find((usuario) => usuario.correo.toLowerCase() === correoParam.toLowerCase()) ?? null
+        : null,
+    [correoParam, usuarios]
+  );
 
-  const originalUser = enEdicion && correoParam
-    ? usuarios.find((item) => item.correo.toLowerCase() === correoParam.toLowerCase()) || null
-    : null;
+  usePageTitle(enEdicion ? 'Editar usuario' : 'Nuevo usuario');
 
-  const [run, setRun] = useState(originalUser ? originalUser.rut || originalUser.run || '' : '');
-  const [nombre, setNombre] = useState(originalUser ? originalUser.nombre : '');
-  const [apellidos, setApellidos] = useState(originalUser ? originalUser.apellidos || '' : '');
-  const [correo, setCorreo] = useState(originalUser ? originalUser.correo : '');
-  const [password, setPassword] = useState('');
-  const [confirmar, setConfirmar] = useState('');
-  const [fechaNacimiento, setFechaNacimiento] = useState(originalUser ? originalUser.fechaNacimiento || '' : '');
-  const [tipo, setTipo] = useState<TipoUsuario>(originalUser ? originalUser.tipo : 'Cliente');
-  const [direccion, setDireccion] = useState(originalUser ? originalUser.direccion || '' : '');
-  const [region, setRegion] = useState(originalUser ? originalUser.region || '' : '');
-  const [comuna, setComuna] = useState(originalUser ? originalUser.comuna || '' : '');
+  const { values, errors, setValue, setErrors, validateAll, validateField } =
+    useForm<UserFormValues>(
+      {
+        run: usuarioOriginal ? usuarioOriginal.rut || usuarioOriginal.run : '',
+        nombre: usuarioOriginal?.nombre ?? '',
+        apellidos: usuarioOriginal?.apellidos ?? '',
+        correo: usuarioOriginal?.correo ?? '',
+        password: '',
+        confirmar: '',
+        telefono: usuarioOriginal?.telefono ?? '',
+        fechaNacimiento: usuarioOriginal?.fechaNacimiento ?? '',
+        tipo: usuarioOriginal?.tipo ?? 'Cliente',
+        region: usuarioOriginal?.region ?? '',
+        comuna: usuarioOriginal?.comuna ?? '',
+        direccion: usuarioOriginal?.direccion ?? '',
+      },
+      {
+        validate: (current) => {
+          const nextErrors: Partial<Record<keyof UserFormValues, string>> = {};
 
-  const [errores, setErrores] = useState<Record<string, string>>({});
+          const run = validarRut(current.run);
+          if (!run.valido) nextErrors.run = run.mensaje;
 
-  const regiones = obtenerRegiones();
-  const comunas = region ? obtenerComunas(region) : [];
+          const nombre = validarNombreUsuario(current.nombre);
+          if (!nombre.valido) nextErrors.nombre = nombre.mensaje;
+
+          const apellidos = validarApellidos(current.apellidos);
+          if (!apellidos.valido) nextErrors.apellidos = apellidos.mensaje;
+
+          const correo = validarCorreo(current.correo);
+          if (!correo.valido) {
+            nextErrors.correo = correo.mensaje;
+          } else if (
+            !enEdicion &&
+            usuarios.some(
+              (usuario) => usuario.correo.toLowerCase() === current.correo.toLowerCase()
+            )
+          ) {
+            nextErrors.correo = 'El correo ya está registrado.';
+          }
+
+          if (!enEdicion || current.password !== '' || current.confirmar !== '') {
+            const password = validarContrasena(current.password);
+            if (!password.valido) nextErrors.password = password.mensaje;
+
+            const confirmacion = validarConfirmacionContrasena(
+              current.password,
+              current.confirmar
+            );
+            if (!confirmacion.valido) nextErrors.confirmar = confirmacion.mensaje;
+          }
+
+          const telefono = validarTelefono(current.telefono);
+          if (!telefono.valido) nextErrors.telefono = telefono.mensaje;
+
+          if (current.fechaNacimiento !== '') {
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            if (new Date(`${current.fechaNacimiento}T00:00:00`) > hoy) {
+              nextErrors.fechaNacimiento = 'La fecha de nacimiento no puede ser futura.';
+            }
+          }
+
+          const direccion = validarDireccion(current.direccion);
+          if (!direccion.valido) nextErrors.direccion = direccion.mensaje;
+
+          if (!current.region) nextErrors.region = 'Debes seleccionar una región.';
+          if (!current.comuna) nextErrors.comuna = 'Debes seleccionar una comuna.';
+
+          return nextErrors;
+        },
+      }
+    );
 
   const handleRutBlur = () => {
-    if (run.trim()) {
-      const res = validarRut(run);
-      if (res.valido) {
-        setRun(formatearRut(run));
-      }
+    if (values.run.trim() && validarRut(values.run).valido) {
+      setValue('run', formatearRut(values.run));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrores({});
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!validateAll()) return;
 
-    let valido = true;
-    const nuevosErrores: Record<string, string> = {};
+    const payload: Usuario = {
+      run: values.run,
+      rut: values.run,
+      nombre: values.nombre.trim(),
+      apellidos: values.apellidos.trim(),
+      correo: enEdicion && usuarioOriginal ? usuarioOriginal.correo : values.correo.trim(),
+      password: values.password !== '' ? values.password : usuarioOriginal?.password ?? '',
+      telefono: values.telefono.trim(),
+      fechaNacimiento: values.fechaNacimiento,
+      tipo: values.tipo as TipoUsuario,
+      region: values.region,
+      comuna: values.comuna,
+      direccion: values.direccion.trim(),
+    };
 
-    const rRun = validarRut(run);
-    if (!rRun.valido) {
-      nuevosErrores.run = rRun.mensaje;
-      valido = false;
-    }
-
-    const rNom = validarNombreUsuario(nombre);
-    if (!rNom.valido) {
-      nuevosErrores.nombre = rNom.mensaje;
-      valido = false;
-    }
-
-    const rApe = validarApellidos(apellidos);
-    if (!rApe.valido) {
-      nuevosErrores.apellidos = rApe.mensaje;
-      valido = false;
-    }
-
-    const rCor = validarCorreo(correo);
-    if (!rCor.valido) {
-      nuevosErrores.correo = rCor.mensaje;
-      valido = false;
-    } else if (!enEdicion && usuarios.some((u) => u.correo.toLowerCase() === correo.toLowerCase())) {
-      nuevosErrores.correo = 'El correo ya está registrado.';
-      valido = false;
-    }
-
-    if (!enEdicion || password !== '' || confirmar !== '') {
-      const rPass = validarContrasena(password);
-      if (!rPass.valido) {
-        nuevosErrores.password = rPass.mensaje;
-        valido = false;
-      }
-      const rConf = validarConfirmacionContrasena(password, confirmar);
-      if (!rConf.valido) {
-        nuevosErrores.confirmar = rConf.mensaje;
-        valido = false;
-      }
-    }
-
-    if (fechaNacimiento !== '') {
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      if (new Date(fechaNacimiento + 'T00:00:00') > hoy) {
-        nuevosErrores.fechaNacimiento = 'La fecha de nacimiento no puede ser futura.';
-        valido = false;
-      }
-    }
-
-    const rDir = validarDireccion(direccion);
-    if (!rDir.valido) {
-      nuevosErrores.direccion = rDir.mensaje;
-      valido = false;
-    }
-
-    const rZona = validarRegionYComuna(region, comuna);
-    if (!rZona.valido) {
-      nuevosErrores.region = rZona.mensaje;
-      nuevosErrores.comuna = rZona.mensaje;
-      valido = false;
-    }
-
-    if (!valido) {
-      setErrores(nuevosErrores);
+    const resultado = guardarUsuarioAdmin(payload, enEdicion, correoParam || undefined);
+    if (!resultado.exito) {
+      setErrors((prev) => ({ ...prev, correo: resultado.mensaje }));
+      showToast(resultado.mensaje, 'danger');
       return;
     }
 
-    const payload: Usuario = {
-      run,
-      rut: run,
-      nombre,
-      apellidos,
-      correo: enEdicion && originalUser ? originalUser.correo : correo,
-      password: password !== '' ? password : originalUser?.password || '',
-      telefono: originalUser?.telefono || '',
-      fechaNacimiento,
-      tipo,
-      region,
-      comuna,
-      direccion,
-    };
-
-    guardarUsuarioAdmin(payload, enEdicion, correoParam || undefined);
+    showToast(resultado.mensaje);
     navigate('/admin/usuarios');
   };
 
+  if (enEdicion && !usuarioOriginal) {
+    return (
+      <EmptyState
+        icon="search"
+        title="Usuario no encontrado"
+        description="El correo indicado no corresponde a ningún usuario registrado."
+        action={
+          <ActionBar
+            nodes={[
+              {
+                keyId: 'volver',
+                label: 'Volver a usuarios',
+                to: '/admin/usuarios',
+                variant: 'primary',
+                icon: 'arrow-left',
+              },
+            ]}
+          />
+        }
+      />
+    );
+  }
+
   return (
     <>
-      <header className="admin-encabezado">
-        <h1>{enEdicion ? 'Editar usuario' : 'Nuevo usuario'}</h1>
-      </header>
+      <PageHeader
+        eyebrow="Usuarios"
+        title={enEdicion ? 'Editar usuario' : 'Nuevo usuario'}
+        description={
+          enEdicion
+            ? 'Actualiza los datos del usuario. Si dejas la contraseña en blanco, se mantendrá la actual.'
+            : 'Crea una cuenta y define su rol dentro de la tienda.'
+        }
+        actions={[
+          {
+            keyId: 'volver',
+            label: 'Volver a usuarios',
+            to: '/admin/usuarios',
+            variant: 'outline',
+            icon: 'arrow-left',
+          },
+        ]}
+      />
 
-      <form id="form-usuario" className="tarjeta formulario" onSubmit={handleSubmit} noValidate>
-        <div className={`campo ${errores.run ? 'campo-invalido' : ''}`}>
-          <label htmlFor="run">RUN / RUT</label>
-          <input
-            type="text"
-            id="run"
-            maxLength={12}
-            placeholder="12.345.678-5"
-            value={run}
-            onChange={(e) => setRun(e.target.value)}
-            onBlur={handleRutBlur}
-          />
-          {errores.run && <p className="mensaje-error" style={{ display: 'block' }}>{errores.run}</p>}
-        </div>
+      <Card>
+        <div className="card-body">
+          <form onSubmit={handleSubmit} noValidate>
+            <FormSection
+              title="Datos personales"
+              description="Información de identificación y contacto del usuario."
+            >
+              <FormGrid>
+                <FormCol span={6}>
+                  <Field
+                    id="run"
+                    label="RUN / RUT"
+                    error={errors.run}
+                    hint="Ej: 12.345.678-5"
+                    required
+                  >
+                    <TextInput
+                      id="run"
+                      name="run"
+                      value={values.run}
+                      maxLength={12}
+                      invalid={Boolean(errors.run)}
+                      onChange={(event) => setValue('run', event.target.value)}
+                      onBlur={() => {
+                        handleRutBlur();
+                        validateField('run');
+                      }}
+                    />
+                  </Field>
+                </FormCol>
 
-        <div className={`campo ${errores.nombre ? 'campo-invalido' : ''}`}>
-          <label htmlFor="nombre">Nombre</label>
-          <input
-            type="text"
-            id="nombre"
-            maxLength={50}
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-          />
-          {errores.nombre && <p className="mensaje-error" style={{ display: 'block' }}>{errores.nombre}</p>}
-        </div>
+                <FormCol span={6}>
+                  <Field id="nombre" label="Nombre" error={errors.nombre} required>
+                    <TextInput
+                      id="nombre"
+                      name="nombre"
+                      value={values.nombre}
+                      maxLength={50}
+                      invalid={Boolean(errors.nombre)}
+                      onChange={(event) => setValue('nombre', event.target.value)}
+                      onBlur={() => validateField('nombre')}
+                    />
+                  </Field>
+                </FormCol>
 
-        <div className={`campo ${errores.apellidos ? 'campo-invalido' : ''}`}>
-          <label htmlFor="apellidos">Apellidos</label>
-          <input
-            type="text"
-            id="apellidos"
-            maxLength={100}
-            value={apellidos}
-            onChange={(e) => setApellidos(e.target.value)}
-          />
-          {errores.apellidos && <p className="mensaje-error" style={{ display: 'block' }}>{errores.apellidos}</p>}
-        </div>
+                <FormCol span={6}>
+                  <Field id="apellidos" label="Apellidos" error={errors.apellidos} required>
+                    <TextInput
+                      id="apellidos"
+                      name="apellidos"
+                      value={values.apellidos}
+                      maxLength={100}
+                      invalid={Boolean(errors.apellidos)}
+                      onChange={(event) => setValue('apellidos', event.target.value)}
+                      onBlur={() => validateField('apellidos')}
+                    />
+                  </Field>
+                </FormCol>
 
-        <div className={`campo ${errores.correo ? 'campo-invalido' : ''}`}>
-          <label htmlFor="correo">Correo</label>
-          <input
-            type="email"
-            id="correo"
-            maxLength={100}
-            disabled={enEdicion}
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-          />
-          {errores.correo && <p className="mensaje-error" style={{ display: 'block' }}>{errores.correo}</p>}
-        </div>
+                <FormCol span={6}>
+                  <Field id="telefono" label="Teléfono" error={errors.telefono} hint="Opcional.">
+                    <TextInput
+                      id="telefono"
+                      name="telefono"
+                      type="tel"
+                      value={values.telefono}
+                      maxLength={15}
+                      invalid={Boolean(errors.telefono)}
+                      onChange={(event) => setValue('telefono', event.target.value)}
+                      onBlur={() => validateField('telefono')}
+                    />
+                  </Field>
+                </FormCol>
 
-        <div className={`campo ${errores.password ? 'campo-invalido' : ''}`}>
-          <label htmlFor="password">Contraseña {enEdicion && '(dejar en blanco para no modificar)'}</label>
-          <input
-            type="password"
-            id="password"
-            maxLength={10}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          {errores.password && <p className="mensaje-error" style={{ display: 'block' }}>{errores.password}</p>}
-        </div>
+                <FormCol span={6}>
+                  <Field
+                    id="fecha-nacimiento"
+                    label="Fecha de nacimiento"
+                    error={errors.fechaNacimiento}
+                    hint="Opcional."
+                  >
+                    <TextInput
+                      id="fecha-nacimiento"
+                      name="fechaNacimiento"
+                      type="date"
+                      value={values.fechaNacimiento}
+                      invalid={Boolean(errors.fechaNacimiento)}
+                      onChange={(event) => setValue('fechaNacimiento', event.target.value)}
+                      onBlur={() => validateField('fechaNacimiento')}
+                    />
+                  </Field>
+                </FormCol>
 
-        <div className={`campo ${errores.confirmar ? 'campo-invalido' : ''}`}>
-          <label htmlFor="confirmar">Confirmar contraseña</label>
-          <input
-            type="password"
-            id="confirmar"
-            maxLength={10}
-            value={confirmar}
-            onChange={(e) => setConfirmar(e.target.value)}
-          />
-          {errores.confirmar && <p className="mensaje-error" style={{ display: 'block' }}>{errores.confirmar}</p>}
-        </div>
+                <FormCol span={6}>
+                  <Field id="tipo" label="Tipo de usuario">
+                    <Select
+                      id="tipo"
+                      name="tipo"
+                      value={values.tipo}
+                      options={TIPOS_USUARIO.map((tipo) => ({ value: tipo, label: tipo }))}
+                      onChange={(event) => setValue('tipo', event.target.value)}
+                    />
+                  </Field>
+                </FormCol>
+              </FormGrid>
+            </FormSection>
 
-        <div className={`campo ${errores.fechaNacimiento ? 'campo-invalido' : ''}`}>
-          <label htmlFor="fecha-nacimiento">Fecha nacimiento (opcional)</label>
-          <input
-            type="date"
-            id="fecha-nacimiento"
-            value={fechaNacimiento}
-            onChange={(e) => setFechaNacimiento(e.target.value)}
-          />
-          {errores.fechaNacimiento && (
-            <p className="mensaje-error" style={{ display: 'block' }}>{errores.fechaNacimiento}</p>
-          )}
-        </div>
+            <FormSection
+              title="Acceso"
+              description="Credenciales con las que el usuario ingresará a la tienda."
+            >
+              <FormGrid>
+                <FormCol span={12}>
+                  <Field
+                    id="correo"
+                    label="Correo"
+                    error={errors.correo}
+                    hint={enEdicion ? 'El correo no se puede modificar.' : undefined}
+                    required
+                  >
+                    <TextInput
+                      id="correo"
+                      name="correo"
+                      type="email"
+                      value={values.correo}
+                      maxLength={100}
+                      disabled={enEdicion}
+                      invalid={Boolean(errors.correo)}
+                      onChange={(event) => setValue('correo', event.target.value)}
+                      onBlur={() => validateField('correo')}
+                    />
+                  </Field>
+                </FormCol>
 
-        <div className="campo">
-          <label htmlFor="tipo">Tipo de usuario</label>
-          <select id="tipo" value={tipo} onChange={(e) => setTipo(e.target.value as TipoUsuario)}>
-            {TIPOS_USUARIO.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
+                <FormCol span={6}>
+                  <Field
+                    id="password"
+                    label={enEdicion ? 'Nueva contraseña (opcional)' : 'Contraseña'}
+                    error={errors.password}
+                    required={!enEdicion}
+                  >
+                    <TextInput
+                      id="password"
+                      name="password"
+                      type="password"
+                      value={values.password}
+                      maxLength={10}
+                      invalid={Boolean(errors.password)}
+                      autoComplete="new-password"
+                      onChange={(event) => setValue('password', event.target.value)}
+                      onBlur={() => validateField('password')}
+                    />
+                  </Field>
+                </FormCol>
 
-        <div className={`campo ${errores.region ? 'campo-invalido' : ''}`}>
-          <label htmlFor="region">Región</label>
-          <select
-            id="region"
-            value={region}
-            onChange={(e) => {
-              const reg = e.target.value;
-              setRegion(reg);
-              setComuna('');
-            }}
-          >
-            <option value="">-- Seleccione la región --</option>
-            {regiones.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-          {errores.region && <p className="mensaje-error" style={{ display: 'block' }}>{errores.region}</p>}
-        </div>
+                <FormCol span={6}>
+                  <Field
+                    id="confirmar"
+                    label="Confirmar contraseña"
+                    error={errors.confirmar}
+                    required={!enEdicion}
+                  >
+                    <TextInput
+                      id="confirmar"
+                      name="confirmar"
+                      type="password"
+                      value={values.confirmar}
+                      maxLength={10}
+                      invalid={Boolean(errors.confirmar)}
+                      autoComplete="new-password"
+                      onChange={(event) => setValue('confirmar', event.target.value)}
+                      onBlur={() => validateField('confirmar')}
+                    />
+                  </Field>
+                </FormCol>
+              </FormGrid>
+            </FormSection>
 
-        <div className={`campo ${errores.comuna ? 'campo-invalido' : ''}`}>
-          <label htmlFor="comuna">Comuna</label>
-          <select
-            id="comuna"
-            value={comuna}
-            disabled={!region || comunas.length === 0}
-            onChange={(e) => setComuna(e.target.value)}
-          >
-            <option value="">-- Seleccione la comuna --</option>
-            {comunas.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          {errores.comuna && <p className="mensaje-error" style={{ display: 'block' }}>{errores.comuna}</p>}
-        </div>
+            <FormSection title="Ubicación" description="Dirección y zona de despacho del usuario.">
+              <FormGrid>
+                <RegionComunaFields
+                  region={values.region}
+                  comuna={values.comuna}
+                  regionError={errors.region}
+                  comunaError={errors.comuna}
+                  onRegionChange={(value) => {
+                    setValue('region', value);
+                    setValue('comuna', '');
+                  }}
+                  onComunaChange={(value) => setValue('comuna', value)}
+                  onRegionBlur={() => validateField('region')}
+                  onComunaBlur={() => validateField('comuna')}
+                />
 
-        <div className={`campo ${errores.direccion ? 'campo-invalido' : ''}`}>
-          <label htmlFor="direccion">Dirección</label>
-          <input
-            type="text"
-            id="direccion"
-            maxLength={300}
-            value={direccion}
-            onChange={(e) => setDireccion(e.target.value)}
-          />
-          {errores.direccion && <p className="mensaje-error" style={{ display: 'block' }}>{errores.direccion}</p>}
-        </div>
+                <FormCol span={12}>
+                  <Field id="direccion" label="Dirección" error={errors.direccion} required>
+                    <TextInput
+                      id="direccion"
+                      name="direccion"
+                      value={values.direccion}
+                      maxLength={300}
+                      invalid={Boolean(errors.direccion)}
+                      onChange={(event) => setValue('direccion', event.target.value)}
+                      onBlur={() => validateField('direccion')}
+                    />
+                  </Field>
+                </FormCol>
+              </FormGrid>
+            </FormSection>
 
-        <div className="grupo-botones">
-          <button className="btn btn-primario" type="submit">
-            Guardar
-          </button>
-          <Link className="btn btn-secundario" to="/admin/usuarios">
-            Volver
-          </Link>
+            <FormActions
+              submitLabel={enEdicion ? 'Guardar cambios' : 'Crear usuario'}
+              cancelTo="/admin/usuarios"
+              cancelLabel="Volver"
+            />
+          </form>
         </div>
-      </form>
+      </Card>
     </>
   );
 };

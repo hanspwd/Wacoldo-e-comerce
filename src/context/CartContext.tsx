@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ItemCarrito, Producto, ResumenCarrito } from '@/types';
-import { CUPONES, CLAVE_CARRITO } from '@/utils/datos';
+import { CLAVE_CARRITO, CLAVE_CUPON, CUPONES } from '@/data';
+import { guardarJSON, leerJSON } from '@/services/storage';
 
 interface CartContextType {
   items: ItemCarrito[];
@@ -20,133 +21,148 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<ItemCarrito[]>(() => {
-    try {
-      const guardado = localStorage.getItem(CLAVE_CARRITO);
-      if (guardado) {
-        const parsed = JSON.parse(guardado);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch {
-      // fallback
-    }
-    return [];
+    const guardado = leerJSON<ItemCarrito[]>(CLAVE_CARRITO, []);
+    return Array.isArray(guardado) ? guardado : [];
   });
 
-  const [cupon, setCupon] = useState<string | null>(null);
+  const [cupon, setCupon] = useState<string | null>(() => leerJSON<string | null>(CLAVE_CUPON, null));
 
   useEffect(() => {
-    try {
-      localStorage.setItem(CLAVE_CARRITO, JSON.stringify(items));
-    } catch {
-      // ignore
-    }
+    guardarJSON(CLAVE_CARRITO, items);
   }, [items]);
 
-  const totalCantidad = items.reduce((acc, item) => acc + item.cantidad, 0);
+  useEffect(() => {
+    guardarJSON(CLAVE_CUPON, cupon);
+  }, [cupon]);
 
-  const subtotal = items.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
-  const porcentajeDescuento = cupon && CUPONES[cupon] ? CUPONES[cupon] : 0;
-  const descuento = Math.round((subtotal * porcentajeDescuento) / 100);
-  const total = Math.max(0, subtotal - descuento);
+  const totalCantidad = useMemo(
+    () => items.reduce((total, item) => total + item.cantidad, 0),
+    [items]
+  );
 
-  const resumen: ResumenCarrito = {
-    subtotal,
-    descuento,
-    porcentajeDescuento,
-    total,
-    cuponAplicado: cupon,
-  };
+  const resumen = useMemo<ResumenCarrito>(() => {
+    const subtotal = items.reduce((total, item) => total + item.precio * item.cantidad, 0);
+    const porcentajeDescuento = cupon && CUPONES[cupon] ? CUPONES[cupon] : 0;
+    const descuento = Math.round((subtotal * porcentajeDescuento) / 100);
 
-  const agregarProducto = (producto: Producto, cantidad: number = 1) => {
-    if (producto.stock <= 0) {
-      return { exito: false, mensaje: 'El producto está agotado.' };
-    }
+    return {
+      subtotal,
+      descuento,
+      porcentajeDescuento,
+      total: Math.max(0, subtotal - descuento),
+      cuponAplicado: cupon,
+    };
+  }, [cupon, items]);
 
-    const index = items.findIndex((i) => i.codigo === producto.codigo);
-    if (index !== -1) {
-      const nuevaCantidad = items[index].cantidad + cantidad;
-      if (nuevaCantidad > producto.stock) {
-        return {
-          exito: false,
-          mensaje: `No puedes agregar más de ${producto.stock} unidades (stock disponible).`,
-        };
+  const agregarProducto = useCallback(
+    (producto: Producto, cantidad: number = 1) => {
+      if (producto.stock <= 0) {
+        return { exito: false, mensaje: 'El producto está agotado.' };
       }
-      setItems((prev) =>
-        prev.map((item, idx) => (idx === index ? { ...item, cantidad: nuevaCantidad } : item))
-      );
-    } else {
-      if (cantidad > producto.stock) {
-        return {
-          exito: false,
-          mensaje: `No puedes agregar más de ${producto.stock} unidades.`,
-        };
+
+      const index = items.findIndex((item) => item.codigo === producto.codigo);
+      if (index !== -1) {
+        const nuevaCantidad = items[index].cantidad + cantidad;
+        if (nuevaCantidad > producto.stock) {
+          return {
+            exito: false,
+            mensaje: `No puedes agregar más de ${producto.stock} unidades (stock disponible).`,
+          };
+        }
+
+        setItems((prev) =>
+          prev.map((item, itemIndex) =>
+            itemIndex === index ? { ...item, cantidad: nuevaCantidad } : item
+          )
+        );
+      } else {
+        if (cantidad > producto.stock) {
+          return {
+            exito: false,
+            mensaje: `No puedes agregar más de ${producto.stock} unidades.`,
+          };
+        }
+
+        setItems((prev) => [
+          ...prev,
+          {
+            codigo: producto.codigo,
+            nombre: producto.nombre,
+            precio: producto.precio,
+            cantidad,
+            stock: producto.stock,
+            imagen: producto.imagen,
+          },
+        ]);
       }
-      setItems((prev) => [
-        ...prev,
-        {
-          codigo: producto.codigo,
-          nombre: producto.nombre,
-          precio: producto.precio,
-          cantidad,
-          stock: producto.stock,
-          imagen: producto.imagen,
-        },
-      ]);
-    }
 
-    return { exito: true, mensaje: `"${producto.nombre}" añadido al carrito.` };
-  };
+      return { exito: true, mensaje: `"${producto.nombre}" se añadió al carrito.` };
+    },
+    [items]
+  );
 
-  const cambiarCantidad = (codigo: string, delta: number) => {
-    const item = items.find((i) => i.codigo === codigo);
-    if (!item) return { exito: false };
+  const eliminarItem = useCallback((codigo: string) => {
+    setItems((prev) => prev.filter((item) => item.codigo !== codigo));
+  }, []);
 
-    const nueva = item.cantidad + delta;
-    if (nueva <= 0) {
-      eliminarItem(codigo);
-      return { exito: true };
-    }
-    if (nueva > item.stock) {
-      return { exito: false, mensaje: `No puedes superar el stock máximo de ${item.stock}.` };
-    }
+  const cambiarCantidad = useCallback(
+    (codigo: string, delta: number) => {
+      const item = items.find((current) => current.codigo === codigo);
+      if (!item) return { exito: false };
 
-    setItems((prev) =>
-      prev.map((i) => (i.codigo === codigo ? { ...i, cantidad: nueva } : i))
-    );
-    return { exito: true };
-  };
+      const nuevaCantidad = item.cantidad + delta;
+      if (nuevaCantidad <= 0) {
+        eliminarItem(codigo);
+        return { exito: true };
+      }
 
-  const establecerCantidad = (codigo: string, cantidad: number) => {
-    const item = items.find((i) => i.codigo === codigo);
-    if (!item) return { exito: false };
+      if (nuevaCantidad > item.stock) {
+        return { exito: false, mensaje: `No puedes superar el stock máximo de ${item.stock}.` };
+      }
 
-    if (cantidad <= 0) {
-      eliminarItem(codigo);
-      return { exito: true };
-    }
-    if (cantidad > item.stock) {
       setItems((prev) =>
-        prev.map((i) => (i.codigo === codigo ? { ...i, cantidad: item.stock } : i))
+        prev.map((current) =>
+          current.codigo === codigo ? { ...current, cantidad: nuevaCantidad } : current
+        )
       );
-      return { exito: false, mensaje: `Stock máximo ajustado a ${item.stock}.` };
-    }
+      return { exito: true };
+    },
+    [eliminarItem, items]
+  );
 
-    setItems((prev) =>
-      prev.map((i) => (i.codigo === codigo ? { ...i, cantidad } : i))
-    );
-    return { exito: true };
-  };
+  const establecerCantidad = useCallback(
+    (codigo: string, cantidad: number) => {
+      const item = items.find((current) => current.codigo === codigo);
+      if (!item) return { exito: false };
 
-  const eliminarItem = (codigo: string) => {
-    setItems((prev) => prev.filter((i) => i.codigo !== codigo));
-  };
+      if (cantidad <= 0) {
+        eliminarItem(codigo);
+        return { exito: true };
+      }
 
-  const vaciarCarrito = () => {
+      if (cantidad > item.stock) {
+        setItems((prev) =>
+          prev.map((current) =>
+            current.codigo === codigo ? { ...current, cantidad: item.stock } : current
+          )
+        );
+        return { exito: false, mensaje: `Stock máximo ajustado a ${item.stock}.` };
+      }
+
+      setItems((prev) =>
+        prev.map((current) => (current.codigo === codigo ? { ...current, cantidad } : current))
+      );
+      return { exito: true };
+    },
+    [eliminarItem, items]
+  );
+
+  const vaciarCarrito = useCallback(() => {
     setItems([]);
     setCupon(null);
-  };
+  }, []);
 
-  const aplicarCupon = (codigo: string) => {
+  const aplicarCupon = useCallback((codigo: string) => {
     const limpio = codigo.trim().toUpperCase();
     if (CUPONES[limpio]) {
       setCupon(limpio);
@@ -155,38 +171,51 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         mensaje: `Cupón ${limpio} aplicado (${CUPONES[limpio]}% de descuento).`,
       };
     }
-    return { exito: false, mensaje: 'Cupón inválido o expirado. Prueba DUOC10 o BIENVENIDA15.' };
-  };
 
-  const removerCupon = () => {
-    setCupon(null);
-  };
+    return {
+      exito: false,
+      mensaje: 'Cupón inválido o expirado. Prueba con DUOC10 o BIENVENIDA15.',
+    };
+  }, []);
 
-  return (
-    <CartContext.Provider
-      value={{
-        items,
-        totalCantidad,
-        cupon,
-        resumen,
-        agregarProducto,
-        cambiarCantidad,
-        establecerCantidad,
-        eliminarItem,
-        vaciarCarrito,
-        aplicarCupon,
-        removerCupon,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
+  const removerCupon = useCallback(() => setCupon(null), []);
+
+  const value = useMemo(
+    () => ({
+      items,
+      totalCantidad,
+      cupon,
+      resumen,
+      agregarProducto,
+      cambiarCantidad,
+      establecerCantidad,
+      eliminarItem,
+      vaciarCarrito,
+      aplicarCupon,
+      removerCupon,
+    }),
+    [
+      items,
+      totalCantidad,
+      cupon,
+      resumen,
+      agregarProducto,
+      cambiarCantidad,
+      establecerCantidad,
+      eliminarItem,
+      vaciarCarrito,
+      aplicarCupon,
+      removerCupon,
+    ]
   );
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
 
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error('useCart debe usarse dentro de CartProvider');
+    throw new Error('useCart debe estar dentro de CartProvider');
   }
   return context;
 };

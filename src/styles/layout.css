@@ -1,0 +1,323 @@
+/* ==========================================================================
+   Header y navegación pública
+   ========================================================================== */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+.site-navbar {
+  padding: 0.7rem 0;
+  background:
+    radial-gradient(circle at 12% -60%, rgba(59, 130, 246, 0.5), transparent 55%),
+    linear-gradient(100deg, #04101f 0%, #0b2545 55%, #123c69 100%);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(4, 16, 31, 0.2);
+}
+
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #fff;
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.site-brand:hover {
+  color: #fff;
+}
+
+.site-brand strong {
+  color: var(--accent-500);
+  font-weight: 800;
+}
+
+.site-brand__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, var(--brand-500), var(--brand-600));
+  box-shadow:
+    0 8px 18px rgba(31, 111, 235, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.site-nav {
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.site-nav .nav-link {
+  position: relative;
+  padding: 0.55rem 0.85rem !important;
+  border-radius: var(--radius-pill);
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.site-nav .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.site-nav .nav-link.active {
+  color: #fff;
+}
+
+.site-nav .nav-link.active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0.18rem;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background-color: var(--accent-500);
+  transform: translateX(-50%);
+}
+
+.cart-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.35rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent-500);
+  color: #3a2a00;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+  animation: cart-pop 0.3s ease;
+}
+
+@keyframes cart-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.navbar-session {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  padding-top: 0.85rem;
+  margin-top: 0.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.navbar-session__welcome {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.navbar-session__welcome strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.navbar-toggler-custom {
+  color: #fff;
+}
+
+.site-navbar .btn-ghost {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.site-navbar .btn-ghost:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+@media (max-width: 991.98px) {
+  .site-navbar .navbar-collapse {
+    padding: 0.9rem 0 0.35rem;
+    margin-top: 0.65rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .site-nav {
+    align-items: stretch;
+    gap: 0.2rem;
+  }
+
+  .site-nav .nav-link {
+    padding: 0.65rem 0.8rem !important;
+  }
+
+  .site-nav .nav-link.active::after {
+    top: 50%;
+    left: 0;
+    bottom: auto;
+    width: 3px;
+    height: 20px;
+    transform: translateY(-50%);
+  }
+}
+
+@media (min-width: 992px) {
+  .navbar-session {
+    padding-top: 0;
+    margin-top: 0;
+    margin-left: 1rem;
+    border-top: 0;
+    flex-wrap: nowrap;
+  }
+}
+
+/* ==========================================================================
+   Footer público
+   ========================================================================== */
+.site-footer {
+  margin-top: 4rem;
+  padding: 3.5rem 0 1.5rem;
+  background:
+    radial-gradient(circle at 85% 0%, rgba(31, 111, 235, 0.28), transparent 45%),
+    linear-gradient(160deg, #071a33 0%, #04101f 100%);
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.site-brand--footer {
+  margin-bottom: 0.25rem;
+  font-size: 1.08rem;
+}
+
+.site-brand--footer .site-brand__mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.site-footer__description {
+  max-width: 34rem;
+  margin: 1rem 0 1.35rem;
+  font-size: 0.94rem;
+  line-height: 1.7;
+}
+
+.site-footer__trust {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.85rem;
+}
+
+.site-footer__trust svg {
+  color: var(--accent-500);
+}
+
+.site-footer__trust img {
+  height: 36px;
+  width: auto;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.site-footer__title {
+  margin-bottom: 1rem;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.site-footer__links {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__links a {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.92rem;
+}
+
+.site-footer__links a:hover {
+  color: var(--accent-500);
+}
+
+.site-footer__bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 2.75rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.84rem;
+}
+
+/* Newsletter */
+.newsletter-form .form-label {
+  color: #fff;
+}
+
+.newsletter-form .form-control {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-color: rgba(255, 255, 255, 0.18);
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.newsletter-form .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.newsletter-form .form-control:focus {
+  border-color: var(--accent-500);
+  background-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 4px rgba(255, 171, 0, 0.16);
+  color: #fff;
+}
+
+.newsletter-form .invalid-feedback {
+  margin-top: 0.35rem;
+  color: #ffd0d5;
+}
+
+.newsletter-form__hint {
+  margin: 0.55rem 0 0;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 575.98px) {
+  .site-footer {
+    margin-top: 2.5rem;
+    padding-top: 2.5rem;
+  }
+
+  .site-footer__bottom {
+    flex-direction: column;
+  }
+}

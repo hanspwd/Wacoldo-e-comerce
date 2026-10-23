@@ -1,250 +1,353 @@
-import React, { useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useMemo } from 'react';
+import type { FormEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useProducts } from '@/context/ProductContext';
+import { useToast } from '@/context/ToastContext';
 import {
+  esStockCritico,
+  validarCategoria,
   validarCodigoProducto,
-  validarNombreProducto,
   validarDescripcion,
+  validarNombreProducto,
   validarPrecio,
   validarStock,
   validarStockCritico,
-  validarCategoria,
-  esStockCritico,
 } from '@/utils/validaciones';
+import { IMAGEN_POR_DEFECTO, IMAGENES_DISPONIBLES } from '@/data';
+import { ActionBar } from '@/components/ui/ActionGroup';
+import { Alert } from '@/components/ui/Alert';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Field, Select, Textarea, TextInput } from '@/components/ui/Field';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { FormActions } from '@/components/forms/FormActions';
+import { FormCol, FormGrid } from '@/components/forms/FormGrid';
+import { FormSection } from '@/components/forms/FormSection';
+import { useForm } from '@/hooks/useForm';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
-const imagenesDisponibles = [
-  { label: 'Sin imagen', valor: '' },
-  { label: 'ariculares_inalambricos.png', valor: '/img/ariculares_inalambricos.png' },
-  { label: 'teclado_mecanico.png', valor: '/img/teclado_mecanico.png' },
-  { label: 'polera_algodon.png', valor: '/img/polera_algodon.png' },
-  { label: 'zapatillas_flex.png', valor: '/img/zapatillas_flex.png' },
-  { label: 'lampara_led.png', valor: '/img/lampara_led.png' },
-  { label: 'termo.png', valor: '/img/termo.png' },
-  { label: 'cafe.png', valor: '/img/cafe.png' },
-  { label: 'botella_deportive.png', valor: '/img/botella_deportive.png' },
-];
+interface ProductFormValues {
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  precio: string;
+  stock: string;
+  stockCritico: string;
+  categoria: string;
+  imagen: string;
+  [key: string]: string;
+}
 
-export const AdminProductForm: React.FC = () => {
+export const AdminProductForm = () => {
   const { categorias, obtenerProducto, guardarProducto } = useProducts();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const codigoParam = searchParams.get('codigo');
   const enEdicion = Boolean(codigoParam);
-  const prod = enEdicion && codigoParam ? obtenerProducto(codigoParam) : undefined;
+  const producto = useMemo(
+    () => (codigoParam ? obtenerProducto(codigoParam) : undefined),
+    [codigoParam, obtenerProducto]
+  );
 
-  const [codigo, setCodigo] = useState(prod ? prod.codigo : '');
-  const [nombre, setNombre] = useState(prod ? prod.nombre : '');
-  const [descripcion, setDescripcion] = useState(prod ? prod.descripcion || '' : '');
-  const [precio, setPrecio] = useState(prod ? String(prod.precio) : '');
-  const [stock, setStock] = useState(prod ? String(prod.stock) : '');
-  const [stockCritico, setStockCritico] = useState(prod ? String(prod.stockCritico || '') : '');
-  const [categoria, setCategoria] = useState(prod ? prod.categoria : '');
-  const [imagen, setImagen] = useState(prod ? prod.imagen || '' : '');
+  usePageTitle(enEdicion ? 'Editar producto' : 'Nuevo producto');
 
-  const [errores, setErrores] = useState<Record<string, string>>({});
+  const { values, errors, setValue, setErrors, validateAll, validateField } =
+    useForm<ProductFormValues>(
+      {
+        codigo: producto?.codigo ?? '',
+        nombre: producto?.nombre ?? '',
+        descripcion: producto?.descripcion ?? '',
+        precio: producto ? String(producto.precio) : '',
+        stock: producto ? String(producto.stock) : '',
+        stockCritico: producto ? String(producto.stockCritico) : '',
+        categoria: producto?.categoria ?? '',
+        imagen: producto?.imagen ?? '',
+      },
+      {
+        validate: (current) => {
+          const nextErrors: Partial<Record<keyof ProductFormValues, string>> = {};
 
-  const stockNum = parseInt(stock, 10);
-  const criticoNum = parseInt(stockCritico, 10);
+          let codigo = validarCodigoProducto(current.codigo);
+          if (!enEdicion && codigo.valido && obtenerProducto(current.codigo)) {
+            codigo = { valido: false, mensaje: 'El código ya está en uso.' };
+          }
+          if (!codigo.valido) nextErrors.codigo = codigo.mensaje;
+
+          const nombre = validarNombreProducto(current.nombre);
+          if (!nombre.valido) nextErrors.nombre = nombre.mensaje;
+
+          const descripcion = validarDescripcion(current.descripcion);
+          if (!descripcion.valido) nextErrors.descripcion = descripcion.mensaje;
+
+          const precio = validarPrecio(current.precio);
+          if (!precio.valido) nextErrors.precio = precio.mensaje;
+
+          const stock = validarStock(current.stock);
+          if (!stock.valido) nextErrors.stock = stock.mensaje;
+
+          const stockCritico = validarStockCritico(current.stockCritico);
+          if (!stockCritico.valido) nextErrors.stockCritico = stockCritico.mensaje;
+
+          const categoria = validarCategoria(current.categoria);
+          if (!categoria.valido) nextErrors.categoria = categoria.mensaje;
+
+          return nextErrors;
+        },
+      }
+    );
+
+  const stockNumero = Number.parseInt(values.stock, 10);
+  const criticoNumero = Number.parseInt(values.stockCritico, 10);
   const nivelCritico =
-    !isNaN(stockNum) && !isNaN(criticoNum) && stockNum > 0 && esStockCritico(stockNum, criticoNum);
+    !Number.isNaN(stockNumero) &&
+    !Number.isNaN(criticoNumero) &&
+    stockNumero > 0 &&
+    esStockCritico(stockNumero, criticoNumero);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrores({});
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!validateAll()) return;
 
-    let valido = true;
-    const nuevosErrores: Record<string, string> = {};
-
-    let rCod = validarCodigoProducto(codigo);
-    if (!enEdicion && rCod.valido && obtenerProducto(codigo)) {
-      rCod = { valido: false, mensaje: 'El código ya está en uso.' };
-    }
-    if (!rCod.valido) {
-      nuevosErrores.codigo = rCod.mensaje;
-      valido = false;
-    }
-
-    const rNom = validarNombreProducto(nombre);
-    if (!rNom.valido) {
-      nuevosErrores.nombre = rNom.mensaje;
-      valido = false;
-    }
-
-    const rDesc = validarDescripcion(descripcion);
-    if (!rDesc.valido) {
-      nuevosErrores.descripcion = rDesc.mensaje;
-      valido = false;
-    }
-
-    const rPrec = validarPrecio(precio);
-    if (!rPrec.valido) {
-      nuevosErrores.precio = rPrec.mensaje;
-      valido = false;
-    }
-
-    const rStk = validarStock(stock);
-    if (!rStk.valido) {
-      nuevosErrores.stock = rStk.mensaje;
-      valido = false;
-    }
-
-    const rCrit = validarStockCritico(stockCritico);
-    if (!rCrit.valido) {
-      nuevosErrores.stockCritico = rCrit.mensaje;
-      valido = false;
-    }
-
-    const rCat = validarCategoria(categoria);
-    if (!rCat.valido) {
-      nuevosErrores.categoria = rCat.mensaje;
-      valido = false;
-    }
-
-    if (!valido) {
-      setErrores(nuevosErrores);
-      return;
-    }
-
-    guardarProducto(
+    const codigo = values.codigo.trim();
+    const resultado = guardarProducto(
       {
         codigo,
-        nombre,
-        descripcion,
-        precio: parseFloat(precio),
-        stock: parseInt(stock, 10),
-        stockCritico: stockCritico === '' ? 0 : parseInt(stockCritico, 10),
-        categoria,
-        imagen: imagen || '/img/ariculares_inalambricos.png',
+        nombre: values.nombre.trim(),
+        descripcion: values.descripcion.trim(),
+        precio: Number.parseFloat(values.precio),
+        stock: Number.parseInt(values.stock, 10),
+        stockCritico: values.stockCritico === '' ? 0 : Number.parseInt(values.stockCritico, 10),
+        categoria: values.categoria,
+        imagen: values.imagen || IMAGEN_POR_DEFECTO,
       },
       enEdicion
     );
 
+    if (!resultado.exito) {
+      setErrors((prev) => ({ ...prev, codigo: resultado.mensaje }));
+      showToast(resultado.mensaje, 'danger');
+      return;
+    }
+
+    showToast(resultado.mensaje);
     navigate('/admin/productos');
   };
 
+  if (enEdicion && !producto) {
+    return (
+      <EmptyState
+        icon="search"
+        title="Producto no encontrado"
+        description="El código indicado no corresponde a ningún producto del catálogo."
+        action={
+          <ActionBar
+            nodes={[
+              {
+                keyId: 'volver',
+                label: 'Volver a productos',
+                to: '/admin/productos',
+                variant: 'primary',
+                icon: 'arrow-left',
+              },
+            ]}
+          />
+        }
+      />
+    );
+  }
+
   return (
     <>
-      <header className="admin-encabezado">
-        <h1>{enEdicion ? 'Editar producto' : 'Nuevo producto'}</h1>
-      </header>
+      <PageHeader
+        eyebrow="Catálogo"
+        title={enEdicion ? 'Editar producto' : 'Nuevo producto'}
+        description={
+          enEdicion
+            ? 'Actualiza la información del producto. Los cambios se verán en la tienda al guardar.'
+            : 'Completa la información para incorporar un nuevo producto al catálogo.'
+        }
+        actions={[
+          {
+            keyId: 'volver',
+            label: 'Volver a productos',
+            to: '/admin/productos',
+            variant: 'outline',
+            icon: 'arrow-left',
+          },
+        ]}
+      />
 
-      <form id="form-producto" className="tarjeta formulario" onSubmit={handleSubmit} noValidate>
-        <div className={`campo ${errores.codigo ? 'campo-invalido' : ''}`}>
-          <label htmlFor="codigo">Código producto</label>
-          <input
-            type="text"
-            id="codigo"
-            value={codigo}
-            disabled={enEdicion}
-            onChange={(e) => setCodigo(e.target.value)}
-          />
-          {errores.codigo && <p className="mensaje-error" style={{ display: 'block' }}>{errores.codigo}</p>}
+      <Card>
+        <div className="card-body">
+          <form onSubmit={handleSubmit} noValidate>
+            <FormSection
+              title="Información general"
+              description="Datos que verá el cliente en el catálogo y en la ficha del producto."
+            >
+              <FormGrid>
+                <FormCol span={6}>
+                  <Field
+                    id="codigo"
+                    label="Código del producto"
+                    error={errors.codigo}
+                    hint={enEdicion ? 'El código no se puede modificar.' : 'Mínimo 3 caracteres.'}
+                    required
+                  >
+                    <TextInput
+                      id="codigo"
+                      name="codigo"
+                      value={values.codigo}
+                      disabled={enEdicion}
+                      invalid={Boolean(errors.codigo)}
+                      onChange={(event) => setValue('codigo', event.target.value)}
+                      onBlur={() => validateField('codigo')}
+                    />
+                  </Field>
+                </FormCol>
+
+                <FormCol span={6}>
+                  <Field id="nombre" label="Nombre" error={errors.nombre} required>
+                    <TextInput
+                      id="nombre"
+                      name="nombre"
+                      value={values.nombre}
+                      maxLength={100}
+                      invalid={Boolean(errors.nombre)}
+                      onChange={(event) => setValue('nombre', event.target.value)}
+                      onBlur={() => validateField('nombre')}
+                    />
+                  </Field>
+                </FormCol>
+
+                <FormCol span={12}>
+                  <Field
+                    id="descripcion"
+                    label="Descripción"
+                    error={errors.descripcion}
+                    hint="Opcional. Máximo 500 caracteres."
+                  >
+                    <Textarea
+                      id="descripcion"
+                      name="descripcion"
+                      rows={3}
+                      maxLength={500}
+                      value={values.descripcion}
+                      invalid={Boolean(errors.descripcion)}
+                      onChange={(event) => setValue('descripcion', event.target.value)}
+                      onBlur={() => validateField('descripcion')}
+                    />
+                  </Field>
+                </FormCol>
+
+                <FormCol span={6}>
+                  <Field id="categoria" label="Categoría" error={errors.categoria} required>
+                    <Select
+                      id="categoria"
+                      name="categoria"
+                      value={values.categoria}
+                      options={categorias.map((categoria) => ({
+                        value: categoria,
+                        label: categoria,
+                      }))}
+                      placeholder="Selecciona una categoría"
+                      invalid={Boolean(errors.categoria)}
+                      onChange={(event) => setValue('categoria', event.target.value)}
+                      onBlur={() => validateField('categoria')}
+                    />
+                  </Field>
+                </FormCol>
+
+                <FormCol span={6}>
+                  <Field id="imagen" label="Imagen">
+                    <Select
+                      id="imagen"
+                      name="imagen"
+                      value={values.imagen}
+                      options={IMAGENES_DISPONIBLES.map((imagen) => ({
+                        value: imagen.valor,
+                        label: imagen.label,
+                      }))}
+                      onChange={(event) => setValue('imagen', event.target.value)}
+                    />
+                  </Field>
+                </FormCol>
+              </FormGrid>
+            </FormSection>
+
+            <FormSection
+              title="Precio e inventario"
+              description="Define el precio y el stock disponible. Un precio en 0 se mostrará como gratis."
+            >
+              <FormGrid>
+                <FormCol span={4}>
+                  <Field id="precio" label="Precio" error={errors.precio} hint="Ej: 4999.9" required>
+                    <TextInput
+                      id="precio"
+                      name="precio"
+                      value={values.precio}
+                      invalid={Boolean(errors.precio)}
+                      inputMode="decimal"
+                      onChange={(event) => setValue('precio', event.target.value)}
+                      onBlur={() => validateField('precio')}
+                    />
+                  </Field>
+                </FormCol>
+
+                <FormCol span={4}>
+                  <Field id="stock" label="Stock" error={errors.stock} required>
+                    <TextInput
+                      id="stock"
+                      name="stock"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={values.stock}
+                      invalid={Boolean(errors.stock)}
+                      onChange={(event) => setValue('stock', event.target.value)}
+                      onBlur={() => validateField('stock')}
+                    />
+                  </Field>
+                </FormCol>
+
+                <FormCol span={4}>
+                  <Field
+                    id="stock-critico"
+                    label="Stock crítico"
+                    error={errors.stockCritico}
+                    hint="Opcional."
+                  >
+                    <TextInput
+                      id="stock-critico"
+                      name="stockCritico"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={values.stockCritico}
+                      invalid={Boolean(errors.stockCritico)}
+                      onChange={(event) => setValue('stockCritico', event.target.value)}
+                      onBlur={() => validateField('stockCritico')}
+                    />
+                  </Field>
+                </FormCol>
+              </FormGrid>
+
+              {nivelCritico && (
+                <Alert variant="warning" className="mb-0">
+                  Con los valores ingresados, este producto se marcará como <strong>stock crítico</strong>.
+                </Alert>
+              )}
+            </FormSection>
+
+            <FormActions
+              submitLabel={enEdicion ? 'Guardar cambios' : 'Crear producto'}
+              cancelTo="/admin/productos"
+              cancelLabel="Volver"
+            />
+          </form>
         </div>
-
-        <div className={`campo ${errores.nombre ? 'campo-invalido' : ''}`}>
-          <label htmlFor="nombre">Nombre</label>
-          <input
-            type="text"
-            id="nombre"
-            maxLength={100}
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-          />
-          {errores.nombre && <p className="mensaje-error" style={{ display: 'block' }}>{errores.nombre}</p>}
-        </div>
-
-        <div className={`campo ${errores.descripcion ? 'campo-invalido' : ''}`}>
-          <label htmlFor="descripcion">Descripción (opcional)</label>
-          <textarea
-            id="descripcion"
-            rows={3}
-            maxLength={500}
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-          ></textarea>
-          {errores.descripcion && <p className="mensaje-error" style={{ display: 'block' }}>{errores.descripcion}</p>}
-        </div>
-
-        <div className={`campo ${errores.precio ? 'campo-invalido' : ''}`}>
-          <label htmlFor="precio">Precio</label>
-          <input
-            type="text"
-            id="precio"
-            placeholder="Ej: 4999.9"
-            value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
-          />
-          {errores.precio && <p className="mensaje-error" style={{ display: 'block' }}>{errores.precio}</p>}
-        </div>
-
-        <div className={`campo ${errores.stock ? 'campo-invalido' : ''}`}>
-          <label htmlFor="stock">Stock</label>
-          <input
-            type="number"
-            id="stock"
-            min={0}
-            step={1}
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
-          />
-          {errores.stock && <p className="mensaje-error" style={{ display: 'block' }}>{errores.stock}</p>}
-        </div>
-
-        <div className={`campo ${errores.stockCritico ? 'campo-invalido' : ''}`}>
-          <label htmlFor="stock-critico">Stock crítico (opcional)</label>
-          <input
-            type="number"
-            id="stock-critico"
-            min={0}
-            step={1}
-            value={stockCritico}
-            onChange={(e) => setStockCritico(e.target.value)}
-          />
-          {errores.stockCritico && (
-            <p className="mensaje-error" style={{ display: 'block' }}>{errores.stockCritico}</p>
-          )}
-        </div>
-
-        {nivelCritico && (
-          <div className="alerta alerta-critico" style={{ marginBottom: '16px' }}>
-            El stock está en nivel crítico.
-          </div>
-        )}
-
-        <div className={`campo ${errores.categoria ? 'campo-invalido' : ''}`}>
-          <label htmlFor="categoria">Categoría</label>
-          <select id="categoria" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-            <option value="">-- Seleccione la categoría --</option>
-            {categorias.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          {errores.categoria && <p className="mensaje-error" style={{ display: 'block' }}>{errores.categoria}</p>}
-        </div>
-
-        <div className="campo">
-          <label htmlFor="imagen">Imagen (opcional)</label>
-          <select id="imagen" value={imagen} onChange={(e) => setImagen(e.target.value)}>
-            {imagenesDisponibles.map((img) => (
-              <option key={img.valor} value={img.valor}>
-                {img.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grupo-botones">
-          <button className="btn btn-primario" type="submit">
-            Guardar
-          </button>
-          <Link className="btn btn-secundario" to="/admin/productos">
-            Volver
-          </Link>
-        </div>
-      </form>
+      </Card>
     </>
   );
 };
