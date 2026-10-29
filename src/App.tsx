@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Fragment, lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
@@ -56,55 +56,57 @@ export const App = () => (
       <ProductProvider>
         <CartProvider>
           <ToastProvider>
-            <ScrollToTop />
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route element={<PublicLayout />}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/productos" element={<Products />} />
-                  <Route path="/producto/:codigo" element={<ProductDetail />} />
-                  <Route path="/carrito" element={<Cart />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/registro" element={<Register />} />
-                  <Route path="/nosotros" element={<About />} />
-                  <Route path="/blogs" element={<Blogs />} />
-                  <Route path="/blog/:id" element={<BlogDetail />} />
-                  <Route path="/contacto" element={<Contact />} />
-                </Route>
+            <Fragment>
+              <ScrollToTop />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route element={<PublicLayout />}>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/productos" element={<Products />} />
+                    <Route path="/producto/:codigo" element={<ProductDetail />} />
+                    <Route path="/carrito" element={<Cart />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/registro" element={<Register />} />
+                    <Route path="/nosotros" element={<About />} />
+                    <Route path="/blogs" element={<Blogs />} />
+                    <Route path="/blog/:id" element={<BlogDetail />} />
+                    <Route path="/contacto" element={<Contact />} />
+                  </Route>
 
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute rolesPermitidos={['Administrador', 'Vendedor']}>
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<Dashboard />} />
-                  <Route path="productos" element={<AdminProducts />} />
-                  <Route path="producto-form" element={<AdminProductForm />} />
                   <Route
-                    path="usuarios"
+                    path="/admin"
                     element={
-                      <ProtectedRoute rolesPermitidos={['Administrador']}>
-                        <AdminUsers />
+                      <ProtectedRoute rolesPermitidos={['Administrador', 'Vendedor']}>
+                        <AdminLayout />
                       </ProtectedRoute>
                     }
-                  />
-                  <Route
-                    path="usuario-form"
-                    element={
-                      <ProtectedRoute rolesPermitidos={['Administrador']}>
-                        <AdminUserForm />
-                      </ProtectedRoute>
-                    }
-                  />
-                </Route>
+                  >
+                    <Route index element={<Dashboard />} />
+                    <Route path="productos" element={<AdminProducts />} />
+                    <Route path="producto-form" element={<AdminProductForm />} />
+                    <Route
+                      path="usuarios"
+                      element={
+                        <ProtectedRoute rolesPermitidos={['Administrador']}>
+                          <AdminUsers />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="usuario-form"
+                      element={
+                        <ProtectedRoute rolesPermitidos={['Administrador']}>
+                          <AdminUserForm />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
 
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-            <ToastViewport />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+              <ToastViewport />
+            </Fragment>
           </ToastProvider>
         </CartProvider>
       </ProductProvider>
