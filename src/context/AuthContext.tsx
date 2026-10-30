@@ -31,6 +31,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Cambiar por use state al crear usuarios o registros, lo mismo para productos.
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [usuarios, setUsuarios] = useState<Usuario[]>(() => {
     const guardados = leerJSON<Usuario[]>(CLAVE_USUARIOS, usuariosIniciales);
